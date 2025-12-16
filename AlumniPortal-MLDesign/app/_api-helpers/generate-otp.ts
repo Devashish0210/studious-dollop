@@ -1,5 +1,6 @@
 import axios from "axios";
 import { InitialState } from "@/redux-toolkit/features/employee-login-state";
+import { clientLogger } from "@/lib/client-logger";
 
 const sendEmailToServer = async (employeeLoginState: InitialState) => {
     try {
@@ -9,16 +10,17 @@ const sendEmailToServer = async (employeeLoginState: InitialState) => {
             "bank_acct": employeeLoginState.accountNumber,
             "pan_no": employeeLoginState.panNumber
         });
+        
         if (response.status === 201) {
-
             return true;
         }
         else {
-            return false
+            clientLogger.error(`OTP_Gen_Fail_Status_${response.status}`, "generate-otp.ts");
+            return false;
         }
     } catch (error) {
-        // Handle error communicating with the server for sending the email
-        console.log("Error sending email to server:", error);
+        // Handle error communicating with the server
+        clientLogger.error("OTP_Gen_Exception", "generate-otp.ts", error);
         return false;
     }
 };

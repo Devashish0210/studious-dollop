@@ -1,4 +1,5 @@
 import axios from "axios";
+import { clientLogger } from "@/lib/client-logger";
 
 const handleVerifyCaptcha = async (value: string | null) => {
     try {
@@ -10,10 +11,11 @@ const handleVerifyCaptcha = async (value: string | null) => {
             return true
         }
         else {
+            clientLogger.error(`Recaptcha_Fail_${response.status}`, "recaptcha-api.ts");
             return false
         }
     } catch (error) {
-        console.log(error);
+        clientLogger.error("Recaptcha_Exception", "recaptcha-api.ts", error);
         return false
     }
 };

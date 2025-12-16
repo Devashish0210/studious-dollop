@@ -259,7 +259,7 @@ export class SystemLogger {
       // Validate with Zod (will throw if invalid)
       SystemLogSchema.parse(payload);
       await this.sb.send(payload);
-      console.log("Sent system log to service bus", payload);
+      console.log("Sent system log to service bus");
     } catch (err) {
       console.error("Failed to send system log (validation/send error):", err);
       throw err;
@@ -271,9 +271,9 @@ export class SystemLogger {
     const timestamp = new Date().toISOString();
     const msg = `[START] ${funcName} | File: ${file} | Line: ${line} | Time: ${timestamp}`;
     console.info(msg);
-    // if (process.env.ENV === "PROD") {
+    if (process.env.ENV === "PROD") {
       this.sendLogToServiceBus(msg, "INFO", file).catch(console.error);
-    // }
+    }
     return { startTime: Date.now() };
   }
 
@@ -282,10 +282,9 @@ export class SystemLogger {
     const duration = Date.now() - startTime;
     const msg = `[END] ${funcName} | Success | Duration: ${duration}ms | File: ${file} | Line: ${line}`;
     console.info(msg);
-    this.sendLogToServiceBus(msg, "INFO", file).catch(console.error);
-    // if (process.env.ENV === "PROD") {
-    //   this.sendLogToServiceBus(msg, "INFO", file).catch(console.error);
-    // }
+    if (process.env.ENV === "PROD") {
+      this.sendLogToServiceBus(msg, "INFO", file).catch(console.error);
+    }
   }
 
   async logError(funcName: string, err: Error) {
@@ -362,7 +361,7 @@ export class LangfuseLogger {
       STATUS_MESSAGE: input.statusMessage,
       MODEL: input.model,
       MODEL_PARAMS: input.modelParams,
-      DELAY: (input.delay)/100000,
+      DELAY: (input.delay),
       USAGE_DETAILS: input.usageDetails,
       LABELS: input.labels,
       CONFIG: input.config,
@@ -394,7 +393,7 @@ export class LangfuseLogger {
     try {
       // Strict validation — throws if any field missing / wrong type
       LangfusePayloadSchema.parse(payload);
-      console.log("Langfuse payload validated:", payload);
+      console.log("Langfuse payload validated:");
       await this.sb.send(payload);
     } catch (err) {
       console.error("Failed to send Langfuse payload (validation/send error):", err);

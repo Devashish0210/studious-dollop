@@ -3,9 +3,9 @@ import { SystemLogger, LangfuseLogger, FeedbackLogger } from "./logger-service";
 import { randomUUID } from "crypto";
 
 // Env Configuration
-const APP_NAME = process.env.APP_NAME || "AlumniPortal";
-const APP_ID = process.env.APP_ID || "AlumniPortalApp";
-const ENV = process.env.ENV || "DEV";
+const APP_NAME = "llmApp";
+const APP_ID = "AlumniPortalApp";
+const ENV = "PROD";
 
 /**
  * Helper to resolve UserID and SessionID.
@@ -24,7 +24,7 @@ async function resolveContext(overrides?: { userId?: string; sessionId?: string 
 
     
     const allCookies = cookieStore.getAll().map(c => c.name);
-    console.log(cookieStore.get("employee_login_state"));
+    // console.log(cookieStore.get("employee_login_state"));
 
     const loginCookie = cookieStore.get("employee_login_state")?.value;
 

@@ -3,7 +3,7 @@ import { createTools } from "../../../lib/tools";
 import { azure } from "../../../lib/aoi";
 import { getGeographyPrompt } from "../../../lib/prompt";
 import getSystemPrompt from '../../../lib/simplified-prompt';
-import { getLangfuseLogger } from "@/lib/logger-factory"; 
+import { getLangfuseLogger, getSystemLogger } from "@/lib/logger-factory"; 
 
 export const maxDuration = 30;
 
@@ -144,7 +144,7 @@ export async function POST(req: Request) {
     top_p: 1.0, 
   };
 
-  console.log(`[${requestId}] Chat request started`);
+  // console.log(`[${requestId}] Chat request started`);
   
   try {
     // ============== PARSE REQUEST ==============
@@ -170,6 +170,13 @@ export async function POST(req: Request) {
     empID = bodyEmpID;
     geography = bodyGeography;
     email = bodyEmail;
+
+    // Initialize System Logger for infrastructure errors
+    const systemLogger = await getSystemLogger({
+      userId: empID,
+      sessionId: sessionId,
+      tags: ["chat_route", "azure_openai"]
+    });
     
     // Extract user message (last message in array)
     userMessage = messages[messages.length - 1]?.content || "";
@@ -212,7 +219,7 @@ export async function POST(req: Request) {
         // ============== ON FINISH CALLBACK - LOG SUCCESSFUL COMPLETION ==============
         onFinish: async (result) => {
           try {
-            console.log(`📊 [${requestId}] onFinish triggered`);
+            // console.log(`📊 [${requestId}] onFinish triggered`);
             
             const logger = await getLangfuseLogger({
                 userId: empID,
@@ -266,7 +273,7 @@ export async function POST(req: Request) {
                 }
             });
             
-            console.log(`✅ [${requestId}] Logging dispatched successfully`);
+            // console.log(`✅ [${requestId}] Logging dispatched successfully`);
           } catch (logError) {
             console.error(`❌ [${requestId}] onFinish logging error (non-critical):`, logError);
           }
@@ -285,6 +292,9 @@ export async function POST(req: Request) {
     } catch (streamError: any) {
       // ============== HANDLE STREAMING ERRORS ==============
       console.error(`❌ [${requestId}] streamText failed:`, streamError);
+
+      // Log infrastructure failure to System Log (Service Bus)
+      await systemLogger.logError("Chat_StreamText_Fail", streamError instanceof Error ? streamError : new Error(String(streamError)));
       
       const { userMessage: errorUserMsg, shouldRedirect, errorType } = categorizeError(streamError);
       
@@ -340,7 +350,7 @@ export async function POST(req: Request) {
       return createErrorStream(errorUserMsg, shouldRedirect, errorType);
     }
     
-    console.log(`✅ [${requestId}] Request completed successfully in ${Date.now() - requestStartTime}ms`);
+    // console.log(`✅ [${requestId}] Request completed successfully in ${Date.now() - requestStartTime}ms`);
 
     return result.toDataStreamResponse({
       getErrorMessage: (error: any) => {
@@ -350,6 +360,12 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error(`❌ [${requestId}] Unhandled error in POST handler:`, error);
+
+    // Attempt to log critical failure if we can't even start the stream
+    try {
+      const fallbackLogger = await getSystemLogger({ userId: "unknown", sessionId: "critical_error" });
+      await fallbackLogger.logError("Chat_Route_Critical", error instanceof Error ? error : new Error(String(error)));
+    } catch (e) { console.error("Failed to log critical error to Service Bus", e); }
     
     const { userMessage: errorUserMsg, shouldRedirect, errorType } = categorizeError(error);
         
@@ -403,5 +419,5 @@ export async function POST(req: Request) {
     }
 
     return createErrorStream(errorUserMsg, shouldRedirect, errorType);
-    }
   }
+}

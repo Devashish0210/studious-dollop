@@ -4,6 +4,7 @@ import { InitialStateData as TicketStatusInitialStatus } from "@/redux-toolkit/f
 import handleLogout from '../../_api-helpers/LogOut'
 import { AppDispatch } from "@/redux-toolkit/store";
 import JSZip from "jszip";
+import { clientLogger } from "@/lib/client-logger";
 
 type CreateTicket = {
   "ticket_category": string,
@@ -83,11 +84,13 @@ const createTickets = async (
     );
 
     if (response.status === 403) {
+      clientLogger.error("Ticket_Create_AuthFail", "create-ticket.tsx", new Error("403 Forbidden"));
       handleLogout(dispatch, router);
       return { success: false, error_message: "Authentication failed" };
     }
 
     if (response.status < 200 || response.status >= 300) {
+      clientLogger.error(`Ticket_Create_Fail_${response.status}`, "create-ticket.tsx", new Error(response.statusText));
       return { success: false, error_message: "Request failed" };
     }
 
@@ -100,6 +103,9 @@ const createTickets = async (
     };
 
   } catch (err) {
+    // Log the exception to Azure via proxy
+    clientLogger.error("Ticket_Create_Exception", "create-ticket.tsx", err);
+
     if (axios.isAxiosError(err)) {
       if (err.response && err.response.status === 403) {
         handleLogout(dispatch, router);

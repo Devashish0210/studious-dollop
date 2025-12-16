@@ -11,18 +11,21 @@ export async function submitMessageFeedback(
   requestId: string,
   type: "like" | "dislike"
 ) {
+  // console.log(`[FeedbackAction] 🟢 Starting Message Feedback. Session: ${sessionId}, Request: ${requestId}, Type: ${type}`);
   try {
     // The factory automatically resolves the UserID from cookies
     const logger = await getFeedbackLogger();
     
     // Map UI types to Logger types (boolean)
     const isHelpful = type === "like";
+    // console.log(`[FeedbackAction] Type: "${type}" | Calculated isHelpful: ${isHelpful}`);
 
     await logger.SendMessageFeedback({
       chatId: sessionId, // In this context, the session ID is the Chat ID
       messageId: requestId,
       feedback: isHelpful,
     });
+    // console.log(`[FeedbackAction] ✅ Message Feedback submitted successfully.`);
 
     return { success: true };
   } catch (error) {
@@ -40,6 +43,7 @@ export async function submitChatFeedback(
   rating: number,
   comment: string
 ) {
+  // console.log(`[FeedbackAction] 🔵 Starting Chat Feedback. Session: ${sessionId}, Rating: ${rating}`);
   try {
     const logger = await getFeedbackLogger();
 
@@ -48,6 +52,7 @@ export async function submitChatFeedback(
       rating: rating,
       comment: comment || "", // Ensure string, never null/undefined
     });
+    // console.log(`[FeedbackAction] ✅ Chat Feedback submitted successfully.`);
 
     return { success: true };
   } catch (error) {

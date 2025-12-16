@@ -4,6 +4,8 @@ import axios from "axios";
 //@ts-ignore
 import Cookies from "js-cookie";
 import logout from "./Logout";
+import { clientLogger } from "@/lib/client-logger";
+
 ("./Logout");
 const sendVerificationToBackend = async (
   email: string,
@@ -14,26 +16,6 @@ const sendVerificationToBackend = async (
   dispatch: any
 ) => {
   try {
-    // const dateList = lastWorkingDay.toLocaleDateString().split("/");
-    // dateList[1] = dateList[1].length === 1 ? '0' + dateList[1] : dateList[1];
-    // dateList[0] = dateList[0].length === 1 ? '0' + dateList[0] : dateList[0];
-    // const formattedDate = dateList[2] + "-" + dateList[0] + "-" + dateList[1];
-
-    // const dobList = dob.toLocaleDateString().split("/");
-    // dobList[1] = dobList[1].length === 1 ? '0' + dobList[1] : dobList[1];
-    // dobList[0] = dobList[0].length === 1 ? '0' + dobList[0] : dobList[0];
-    // const formattedDob = dobList[2] + "-" + dobList[0] + "-" + dobList[1];
-
-    // console.log("dobList[0]", dobList[0]);
-    // console.log("dobList[1]", dobList[1]);
-    // console.log("dob", dob);
-
-    // console.log("dateList[0]", dateList[0]);
-    // console.log("dateList[1]", dateList[1]);
-    // console.log("dateList[2]", dateList[2]);
-    // console.log("last working dy", lastWorkingDay);
-    
-
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_BGV_REQUEST_ENDPOINT}`,
       {
@@ -59,17 +41,15 @@ const sendVerificationToBackend = async (
       }
     );
     
-    // console.log({
-    //   employee_id: employeeNumber,
-    //   last_working_day: lastWorkingDay,
-    //   dob: dob
-    // });
     if (response.status === 403) {
+      clientLogger.error("BGV_Backend_AuthFail", "SendVerificationBackend.ts", new Error(`403 Forbidden for ${email}`));
       logout(dispatch);
       return response;
     }
     return response;
   } catch (err) {
+    clientLogger.error("BGV_Backend_Exception", "SendVerificationBackend.ts", err);
+
     if (axios.isAxiosError(err)) {
       if (err.response && err.response.status === 403) {
         logout(dispatch);

@@ -1,4 +1,5 @@
 import { toast } from "react-toastify";
+import { clientLogger } from "@/lib/client-logger";
 
 const sendGetRequestToBackend = async (email: string, otp: string) => {
     const url = process.env.NEXT_PUBLIC_BACKEND_BASE_URL+"/get_past_requests";
@@ -15,16 +16,14 @@ const sendGetRequestToBackend = async (email: string, otp: string) => {
         });
 
         if (response.ok) {
-            // Handle the successful response from the server
             const responseBody = await response.json();
-            // console.log(responseBody);
             return responseBody;
-            //
         } else {
-            // Handle errors
+            clientLogger.error(`PastReq_Fetch_Fail_${response.status}`, "get-past-requests.ts", new Error(response.statusText));
             toast.error("Error in GET request:", { autoClose: 1500 });
         }
     } catch (error) {
+        clientLogger.error("PastReq_Fetch_Exception", "get-past-requests.ts", error);
         console.error("Error during GET request:", error);
     }
 };

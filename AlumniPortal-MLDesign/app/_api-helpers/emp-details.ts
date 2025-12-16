@@ -2,6 +2,7 @@ import axios from "axios";
 import { InitialState } from "@/redux-toolkit/features/employee-login-state";
 import handleLogout from "./LogOut";
 import { AppDispatch } from "@/redux-toolkit/store";
+import { clientLogger } from "@/lib/client-logger";
 
 const getEmployeeDetails = async (employeeLoginState: InitialState, dispatch: AppDispatch, router: any) => {
     try {
@@ -12,23 +13,20 @@ const getEmployeeDetails = async (employeeLoginState: InitialState, dispatch: Ap
                 'X-EMPID': employeeLoginState.empID
             }
         });
-        // console.log("Employee Details Response:", response);
+        
         if (response.status === 403) {
+            clientLogger.error("EmpDetails_Auth_403", "emp-details.ts");
             handleLogout(dispatch, router)
-            // console.log("Employee Details Response: Forbidden");
             return { "doj": "", "lwd": "", "name": "", "title": "", "empID": "" }
         }
         return response.data;
     } catch (err) {
-        // console.log("Error fetching employee details:", err);
+        clientLogger.error("EmpDetails_Fetch_Exception", "emp-details.ts", err);
+        
         if (axios.isAxiosError(err)) {
             if (err.response && err.response.status === 403) {
                 handleLogout(dispatch, router)
-            } else {
-                // console.log(err)
             }
-        } else {
-            // console.log(err)
         }
         return { "doj": "", "lwd": "", "name": "", "title": "", "empID": "" };
     }

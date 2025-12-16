@@ -2,6 +2,7 @@ import axios from "axios";
 import { InitialState } from "@/redux-toolkit/features/employee-login-state";
 import handleLogout from "../../_api-helpers/LogOut";
 import { AppDispatch } from "@/redux-toolkit/store";
+import { clientLogger } from "@/lib/client-logger";
 
 export type NdcRecord = {
     cisNdcStatus?: string;
@@ -18,6 +19,7 @@ const getNDC = async (employeeLoginState: InitialState, dispatch: AppDispatch, r
             }
         });
         if (response.status === 403) {
+            clientLogger.error("NDC_Fetch_AuthFail", "ndc.ts", new Error("403 Forbidden"));
             handleLogout(dispatch, router)
             return {
                 "hrss_ndc": "Failed To Fetch",
@@ -31,6 +33,7 @@ const getNDC = async (employeeLoginState: InitialState, dispatch: AppDispatch, r
             }
         }
         if (response.status != 200) {
+            clientLogger.error(`NDC_Fetch_Fail_${response.status}`, "ndc.ts", new Error(response.statusText));
             return {
                 "hrss_ndc": "Failed To Fetch",
                 "finance_ndc": "Failed To Fetch",
@@ -59,6 +62,8 @@ const getNDC = async (employeeLoginState: InitialState, dispatch: AppDispatch, r
 
     } catch (error) {
         // Handle error communicating with the server for sending the email
+        clientLogger.error("NDC_Fetch_Exception", "ndc.ts", error);
+
         if (axios.isAxiosError(error) && error.response && error.response.status === 403) {
             handleLogout(dispatch, router)
         }

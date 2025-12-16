@@ -206,11 +206,11 @@ export default function FaqTab2() {
             className="py-4 md:py-8 px-4"
           >
             {/* Empty State */}
-            {!selectedKey && (
+            {/* {!selectedKey && (
               <div className="text-center text-gray-500 py-12">
                 Select a category below to view FAQs
               </div>
-            )}
+            )} */}
             {/* Category Buttons with Inline Accordions */}
             {/* 🔴 CHANGED: Added responsive gap */}
             <div className="flex flex-col gap-4 md:gap-6 max-w-4xl mx-auto">

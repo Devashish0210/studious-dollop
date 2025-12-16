@@ -11,7 +11,7 @@ const checkServerStatus = async () => {
         }
     } catch (error) {
         // Handle error communicating with the server for sending the email
-        console.log("Error sending email to server:", error);
+        console.error("Error sending email to server:", error);
         return false;
     }
 };

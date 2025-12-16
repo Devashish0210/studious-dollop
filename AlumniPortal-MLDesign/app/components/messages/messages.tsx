@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { PulseLoader } from "react-spinners";
 import { AIInput } from "../ui/ai-input";
 import { MessageContainer } from "./message-container";
 import TicketStatusTable from "./ticket-status-table";
@@ -29,7 +28,7 @@ export const Messages = ({
   //@ts-ignore
   clearChat,
   //@ts-ignore
-  ticketCache,         
+  ticketCache,
   //@ts-ignore
   ticketCacheTimestamp,
   //@ts-ignore
@@ -46,7 +45,7 @@ export const Messages = ({
     useState(false);
   const lastClickedSuggestionRef = useRef<string | null>(null);
 
-  // ⭐ NEW: Helper function to extract ticket data
+  // ⭐ Helper function to extract ticket data
   const extractTicketData = (message: any) => {
     if (!message.toolInvocations) return null;
 
@@ -57,7 +56,7 @@ export const Messages = ({
     if (!ticketTool || !ticketTool.result) return null;
 
     const result = ticketTool.result;
-    
+
     if (result.status === "SUCCESS" && result.tickets) {
       return result.tickets;
     }
@@ -75,23 +74,40 @@ export const Messages = ({
     }
   }, [isLoading, loadingStartTime]);
 
-  // Determine thinking text message based on message content and timing
-   function getThinkingBaseText() {
-     // If no messages, this is the initial conversation
-     if (!messages || messages.length === 0) {
-       return "Please wait while I process your request";
-     }
- 
+  // ⭐ UPDATED: Determine thinking text message based on live model output
+  function getThinkingBaseText() {
+    // If no messages, this is the initial conversation
+    if (!messages || messages.length === 0) {
+      return "Please wait while I process your request";
+    }
+
     const lastMessage = messages[messages.length - 1];
 
-    // Initial message with no tool invocations yet
-    // Check if the last message has tool invocations
+    // 1. PRIORITY: Use the model's actual "thinking" text if available
+    // This allows the status bar to show "I will search for the relieving letter..."
+    if (isLoading && lastMessage?.role === "assistant" && lastMessage?.content) {
+      // Clean up the content (remove JSON suggestions, trim whitespace)
+      let cleanContent = lastMessage.content
+        .replace(/\{["']suggestions["']:[\s\S]*?\}/g, "")
+        .trim();
+
+      // HEURISTIC: Use this text only if it looks like a status update
+      // (NotEmpty, shorter than a full paragraph, and doesn't look like a final answer)
+      if (cleanContent.length > 2 && cleanContent.length < 150) {
+        // Strip trailing punctuation for a cleaner "status bar" look
+        return cleanContent.replace(/[.,;]+$/, "");
+      }
+    }
+
+    // 2. FALLBACK: Tool-specific hardcoded messages
+    // (Used when the model invokes a tool without saying anything first, or for specific tools)
     if (lastMessage?.toolInvocations?.length > 0) {
-      const lastTool = lastMessage.toolInvocations[lastMessage.toolInvocations.length - 1];
+      const lastTool =
+        lastMessage.toolInvocations[lastMessage.toolInvocations.length - 1];
       const toolName = lastTool.toolName;
 
       // If tool has a result, we are processing it. Otherwise we are executing it.
-      const isPending = !('result' in lastTool);
+      const isPending = !("result" in lastTool);
 
       if (isPending) {
         switch (toolName) {
@@ -122,16 +138,25 @@ export const Messages = ({
       }
     }
 
-     return "Please wait while I process your request";
-   }
+    // 3. DEFAULT
+    return "Please wait while I process your request";
+  }
 
   // Set up thinking animation and check for long response time
   useEffect(() => {
     if (!isLoading) return;
 
+    // Get the dynamic text (either from model or hardcoded fallback)
     let baseText = getThinkingBaseText();
+
     const checkLoadingTime = () => {
-      if (loadingStartTime && Date.now() - loadingStartTime > 7000) {
+      // If it's taking too long (7s), override with a reassurance message
+      // UNLESS we have a specific status from the model (priority)
+      if (
+        loadingStartTime &&
+        Date.now() - loadingStartTime > 7000 &&
+        baseText === "Please wait while I process your request"
+      ) {
         baseText = "Just a couple more moments";
       }
       return baseText;
@@ -147,7 +172,7 @@ export const Messages = ({
     }, 500);
 
     return () => clearInterval(interval);
-  }, [isLoading, loadingStartTime, messages]);
+  }, [isLoading, loadingStartTime, messages]); // Re-run when messages change to update the text
 
   // Extract suggestions from messages
   useEffect(() => {
@@ -248,7 +273,7 @@ export const Messages = ({
       }}
     >
       <img
-        src='./ml-mia-chatbot-logo.png'
+        src="./ml-mia-chatbot-logo.png"
         alt="MIA Logo"
         style={{
           width: "50px",
@@ -292,64 +317,63 @@ export const Messages = ({
         <div className="messages-scroll-area">
           <div className="messages-content">
             {WelcomeBanner}
-            
-            {/* ⭐ MODIFIED: Added ticket table rendering */}
+
             {/* @ts-ignore */}
             {messages.map((message, index) => {
-  const ticketData = extractTicketData(message);
-  const hasTickets = ticketData && ticketData.length > 0;
+              const ticketData = extractTicketData(message);
+              const hasTickets = ticketData && ticketData.length > 0;
 
-  return (
-    <React.Fragment key={index}>
-      {/* ⭐ If NO tickets, show MessageContainer with built-in feedback */}
-      {!hasTickets && (
-        <MessageContainer
-          message={message}
-          index={index}
-          requestId={requestId}
-          sessionId={sessionId}
-          leaveBalanceData={leaveBalanceData}
-          append={append}
-          onSuggestionClick={handleSuggestionClick}
-          isLoading={isLoading}
-          isLastMessage={index === messages.length - 1}
-        />
-      )}
+              return (
+                <React.Fragment key={index}>
+                  {/* If NO tickets, show MessageContainer with built-in feedback */}
+                  {!hasTickets && (
+                    <MessageContainer
+                      message={message}
+                      index={index}
+                      requestId={requestId}
+                      sessionId={sessionId}
+                      leaveBalanceData={leaveBalanceData}
+                      append={append}
+                      onSuggestionClick={handleSuggestionClick}
+                      isLoading={isLoading}
+                      isLastMessage={index === messages.length - 1}
+                    />
+                  )}
 
-      {/* ⭐ If HAS tickets, show message without feedback, then table + feedback */}
-      {hasTickets && (
-        <>
-          {/* Message text without feedback buttons */}
-          <MessageContainer
-            message={message}
-            index={index}
-            requestId={requestId}
-            sessionId={sessionId}
-            leaveBalanceData={leaveBalanceData}
-            append={append}
-            onSuggestionClick={handleSuggestionClick}
-            isLoading={isLoading}
-            isLastMessage={index === messages.length - 1}
-            hideFeedback={true} // ⭐ NEW PROP
-          />
+                  {/* If HAS tickets, show message without feedback, then table + feedback */}
+                  {hasTickets && (
+                    <>
+                      {/* Message text without feedback buttons */}
+                      <MessageContainer
+                        message={message}
+                        index={index}
+                        requestId={requestId}
+                        sessionId={sessionId}
+                        leaveBalanceData={leaveBalanceData}
+                        append={append}
+                        onSuggestionClick={handleSuggestionClick}
+                        isLoading={isLoading}
+                        isLastMessage={index === messages.length - 1}
+                        hideFeedback={true}
+                      />
 
-          {/* Table + Feedback */}
-          <div className="w-full mb-6">
-            <TicketStatusTable tickets={ticketData} />
-            <FeedbackButtons
-              message={message}
-              index={index}
-              requestId={requestId}
-              sessionId={sessionId}
-            />
-          </div>
-        </>
-      )}
-    </React.Fragment>
-  );
-})}
+                      {/* Table + Feedback */}
+                      <div className="w-full mb-6">
+                        <TicketStatusTable tickets={ticketData} />
+                        <FeedbackButtons
+                          message={message}
+                          index={index}
+                          requestId={requestId}
+                          sessionId={sessionId}
+                        />
+                      </div>
+                    </>
+                  )}
+                </React.Fragment>
+              );
+            })}
 
-
+            {/* ⭐ STATUS BAR: Shows the dynamic "Thinking..." text */}
             {isLoading && messages.length > 0 && (
               <div className="loading-container">
                 <div style={{ fontStyle: "italic", color: "#4B5563" }}>
@@ -370,9 +394,7 @@ export const Messages = ({
                     disabled={areSuggestionsDisabled}
                     style={{
                       opacity: areSuggestionsDisabled ? 0.6 : 1,
-                      cursor: areSuggestionsDisabled
-                        ? "not-allowed"
-                        : "pointer",
+                      cursor: areSuggestionsDisabled ? "not-allowed" : "pointer",
                     }}
                   >
                     {suggestion}

@@ -4,36 +4,19 @@ import { Markdown } from "../ui/markdown";
 import { ToolInvocations } from "./tool-invocations";
 
 export const Message = ({ message, leaveBalanceData, append }) => {
-  // console.log("Emp leave bal in message: ", leaveBalanceData);
-
   // User message handling
   if (message.role === "user") {
     return <div className="user-message">{message.content}</div>;
   }
 
-  let cleanedMessageContent = message.content;
-
-  // console.log("Message: ", message);
-
-  try {
-    // Remove the entire JSON object containing suggestions
-    const jsonMatch = message.content.match(/\{["']suggestions["']:.*\}/s);
-    if (jsonMatch) {
-      cleanedMessageContent = message.content.replace(jsonMatch[0], "").trim();
-    }
-
-    // Additional cleanup to remove any trailing whitespace or newlines
-    cleanedMessageContent = cleanedMessageContent.replace(/\s+$/, "");
-  } catch (error) {
-    console.error("Error processing message content:", error);
-  }
-
-  // Check if message has tool invocations
+  // =================================================================================
+  // 1. SPECIAL HANDLING: applyLeave
+  // If it's an applyLeave tool, we strictly show ONLY the tool UI (as per original logic)
+  // =================================================================================
   const hasToolInvocations =
     message.parts &&
     message.parts.some((part) => part.type === "tool-invocation");
 
-  // Check specifically for applyLeave tool
   const hasApplyLeaveTool =
     (hasToolInvocations &&
       message.parts.some(
@@ -45,15 +28,11 @@ export const Message = ({ message, leaveBalanceData, append }) => {
     (message.toolInvocations &&
       message.toolInvocations.some((tool) => tool.toolName === "applyLeave"));
 
-  // If it's an applyLeave tool invocation, only show the tool UI, not the text
   if (hasApplyLeaveTool) {
-    // Check if message has parts with tool invocations
     if (message.parts && message.parts.length > 0) {
-      // Filter out tool invocation parts
       const toolInvocationParts = message.parts.filter(
         (part) => part.type === "tool-invocation" && part.toolInvocation
       );
-
       return (
         <>
           {toolInvocationParts.map((part, index) => (
@@ -62,13 +41,11 @@ export const Message = ({ message, leaveBalanceData, append }) => {
               toolInvocations={[part.toolInvocation]}
               leaveBalanceData={leaveBalanceData}
               onTicketCreated={append}
-              
             />
           ))}
         </>
       );
     } else if (message.toolInvocations) {
-      // Handle toolInvocations at the message level
       return (
         <ToolInvocations
           toolInvocations={message.toolInvocations}
@@ -79,36 +56,74 @@ export const Message = ({ message, leaveBalanceData, append }) => {
     }
   }
 
-  // For other tools or no tools at all
+  // =================================================================================
+  // 2. GENERAL HANDLING: Multi-step Messages (Text -> Tool -> Text)
+  // We iterate through parts to selectively hide "Thinking..." text
+  // =================================================================================
   if (message.parts && message.parts.length > 0) {
-    // Filter out tool invocation parts
-    const toolInvocationParts = message.parts.filter(
-      (part) => part.type === "tool-invocation" && part.toolInvocation
-    );
+    return (
+      <>
+        {message.parts.map((part, index) => {
+          // --- Handle Tool Invocations ---
+          if (part.type === "tool-invocation") {
+            return (
+              <ToolInvocations
+                key={`tool-${index}`}
+                toolInvocations={[part.toolInvocation]}
+                leaveBalanceData={leaveBalanceData}
+                onTicketCreated={append}
+              />
+            );
+          }
 
-    // If tool invocation parts exist, render them
-    if (toolInvocationParts.length > 0) {
-      return (
-        <>
-          {toolInvocationParts.map((part, index) => (
-            <ToolInvocations
-              key={`tool-${index}`}
-              toolInvocations={[part.toolInvocation]}
-              leaveBalanceData={leaveBalanceData}
-              onTicketCreated={append}
-            />
-          ))}
-          {/* Render remaining text parts */}
-          {message.parts
-            .filter((part) => part.type === "text" && part.text)
-            .map((part, index) => (
-              <Markdown key={`text-${index}`} content={cleanedMessageContent} />
-            ))}
-        </>
-      );
-    }
+          // --- Handle Text ---
+          if (part.type === "text" && part.text) {
+            // INTELLIGENT HIDING:
+            // Check if this text is immediately followed by a tool invocation.
+            // If yes, it's likely "I will check..." or "I need to search..." -> HIDE IT.
+            const nextPart = message.parts[index + 1];
+            if (nextPart && nextPart.type === "tool-invocation") {
+              return null; // 🛑 Hide this part
+            }
+
+            // CLEANUP: Remove suggestions JSON from the final text
+            let content = part.text;
+            try {
+              const jsonMatch = content.match(/\{["']suggestions["']:.*\}/s);
+              if (jsonMatch) {
+                content = content.replace(jsonMatch[0], "").trim();
+              }
+              // Clean trailing whitespace
+              content = content.replace(/\s+$/, "");
+            } catch (error) {
+              console.error("Error cleaning part text:", error);
+            }
+
+            if (!content) return null;
+
+            // ✅ Show this part (The Final Answer)
+            return <Markdown key={`text-${index}`} content={content} />;
+          }
+
+          return null;
+        })}
+      </>
+    );
   }
 
-  // Fallback to rendering content directly
+  // =================================================================================
+  // 3. FALLBACK: Simple Text Messages (No parts)
+  // =================================================================================
+  let cleanedMessageContent = message.content;
+  try {
+    const jsonMatch = message.content.match(/\{["']suggestions["']:.*\}/s);
+    if (jsonMatch) {
+      cleanedMessageContent = message.content.replace(jsonMatch[0], "").trim();
+    }
+    cleanedMessageContent = cleanedMessageContent.replace(/\s+$/, "");
+  } catch (error) {
+    console.error("Error processing message content:", error);
+  }
+
   return <Markdown content={cleanedMessageContent} />;
 };
