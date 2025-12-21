@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 3462",
+    "dev": "next dev --turbopack -p 3461",
     "build": "next build",
-    "start": "next start -p 3462",
+    "start": "next start -p 3461",
     "lint": "next lint"
   },
   "dependencies": {
@@ -30,7 +30,7 @@
     "@radix-ui/react-tabs": "^1.1.3",
     "@radix-ui/react-tooltip": "^1.1.8",
     "ai": "^4.1.61",
-    "axios": "^1.13.2",
+    "axios": "^1.8.3",
     "chart.js": "^4.4.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

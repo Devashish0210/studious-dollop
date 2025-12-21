@@ -112,17 +112,20 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
   const [isAccordionOpen, setIsAccordionOpen] = useState<boolean>(false);
 
   // Get available keys from data, use columns prop if provided
+  // Update the availableKeys useMemo to handle potential undefined/null data
   const availableKeys = useMemo(() => {
     if (columns && columns.length > 0) return columns;
-    if (data.length === 0) return [];
-    return Object.keys(data[0]);
+    if (!data || data.length === 0) return [];
+    return Object.keys(data[0] || {});
   }, [data, columns]);
 
   // Get numeric keys for pie chart values and regular Y-axis - more flexible detection
+  // Update the numericKeys useMemo with null checks
   const numericKeys = useMemo(() => {
-    if (data.length === 0) return availableKeys; // Fallback to all keys if no data
+    if (!data || data.length === 0) return availableKeys;
 
     return availableKeys.filter((key) => {
+      if (!data[0]) return false;
       // Check multiple data points to ensure consistency
       const values = data.slice(0, Math.min(5, data.length)).map((d) => d[key]);
       return values.every(
@@ -153,10 +156,12 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
   };
 
   // Generate pie chart data with better error handling
+  // Update pieData useMemo with additional checks
   const pieData = useMemo(() => {
-    if (!data || data.length === 0) return [];
+    if (!data || !Array.isArray(data) || data.length === 0) return [];
 
     return data
+      .filter((d) => d !== null && d !== undefined)
       .map((d, index) => ({
         name: String(d[pieCategory] || `Item ${index + 1}`),
         value: safeToNumber(d[pieValue] || 0),
@@ -165,11 +170,16 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
   }, [data, pieCategory, pieValue]);
 
   // Process data for non-pie charts to handle mixed data types
+  // Update processedData useMemo with null checks
   const processedData = useMemo(() => {
-    return data.map((item) => ({
-      ...item,
-      [yAxis]: safeToNumber(item[yAxis] || 0),
-    }));
+    if (!data || !Array.isArray(data)) return [];
+
+    return data
+      .filter((item) => item !== null && item !== undefined)
+      .map((item) => ({
+        ...item,
+        [yAxis]: safeToNumber(item[yAxis] || 0),
+      }));
   }, [data, yAxis]);
 
   const renderChart = (): React.ReactElement => {
@@ -368,7 +378,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
                 "focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
               )}
             >
-              {categoryKeys.map((key) => (
+              {categoryKeys?.map((key) => (
                 <option key={key} value={key}>
                   {key.charAt(0).toUpperCase() + key.slice(1)}
                 </option>
@@ -396,12 +406,12 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
               )}
             >
               {numericKeys.length > 0
-                ? numericKeys.map((key) => (
+                ? numericKeys?.map((key) => (
                   <option key={key} value={key}>
                     {key.charAt(0).toUpperCase() + key.slice(1)}
                   </option>
                 ))
-                : availableKeys.map((key) => (
+                : availableKeys?.map((key) => (
                   <option key={key} value={key}>
                     {key.charAt(0).toUpperCase() + key.slice(1)}
                   </option>
@@ -464,7 +474,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
                 "focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
               )}
             >
-              {availableKeys.map((key) => (
+              {availableKeys?.map((key) => (
                 <option key={key} value={key}>
                   {key.charAt(0).toUpperCase() + key.slice(1)}
                 </option>
@@ -491,7 +501,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
                 "focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
               )}
             >
-              {availableKeys.map((key) => (
+              {availableKeys?.map((key) => (
                 <option key={key} value={key}>
                   {key.charAt(0).toUpperCase() + key.slice(1)}
                   {!numericKeys.includes(key) && " (will convert to number)"}
@@ -583,7 +593,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
             "border-neutral-300 dark:border-neutral-700"
           )}>
             <div className="space-y-2">
-              {pieData.map((item, index) => {
+              {pieData?.map((item, index) => {
                 const percentage =
                   total > 0 ? ((item.value / total) * 100).toFixed(1) : "0.0";
                 return (

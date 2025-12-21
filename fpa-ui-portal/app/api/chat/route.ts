@@ -9,6 +9,7 @@ import {
   greetingResponsePrompt,
   databaseQueryToolPrompt,
   insightsPrompt,
+  classificationPrompt,
 } from "@/lib/prompts";
 import { executeSQLQuery, fetchSQLQuery } from "@/lib/tools";
 import { insightsModel } from "@/lib/fw";
@@ -58,33 +59,12 @@ export async function POST(req: NextRequest) {
           schema: z.object({
             route: z.enum(["Greeting", "Conversation", "DatabaseQuery"]),
             confidence: z.number().min(0).max(1).optional(),
-            question : z.string().describe("The User input or question to be classified"),
+            question: z
+              .string()
+              .describe("The User input or question to be classified"),
           }),
           messages,
-          system: `You are an advanced question classifier designed to accurately categorize user inputs:
-              
-                  1. 'Greeting' - Strictly for messages that are purely greetings or social pleasantries, such as:
-                     - "Hi there"
-                     - "Hello"
-                     - "Good morning"
-                     - "How are you?"
-                     - Quick, informal opening exchanges with no substantive content
-              
-                  2. 'Conversation' - For general chatting, open-ended discussions, or conversational queries that:
-                     - Involve general discussion
-                     - Seek advice or opinions
-                     - Request explanations or clarifications
-                     - Engage in small talk or casual conversation
-                     - Do not specifically request database-driven information or reports
-              
-                  3. 'DatabaseQuery' - Specifically for queries requesting specific data retrieval or reporting, such as:
-                     - "Show me invoices generated last month"
-                     - "List suppliers with MSME classification"
-                     - "Generate a report of sales for Q1 2024"
-                     - "Retrieve customer details for XYZ company"
-                     - Queries that require direct data extraction from a database or structured information system
-              
-                  Your task is to precisely categorize each input into one of these three routes based on its primary intent and content.`,
+          system: classificationPrompt,
         });
 
         console.log(classification, "classification");
@@ -125,17 +105,21 @@ export async function POST(req: NextRequest) {
             model: azure(process.env.AZURE_OPENAI_DEPLOYMENT_NAME!),
             system: databaseQueryToolPrompt,
             messages: messages,
-            // Tool to generate and execute SQL queries
+            maxSteps: 3, // reduced steps to lower execution time
+            // Tools for sequential execution
             tools: {
-              sqlQueryTool: tool({
-                description: "Generates and executes SQL queries using AI",
+              // Tool 1: Generate SQL Query
+              generateSQLQuery: tool({
+                description:
+                  "Generates a SQL query based on the user's question",
                 parameters: z.object({
                   question: z
                     .string()
-                    .describe("The User question for which SQL query to be generated and executed"),
+                    .describe(
+                      "The user question for which SQL query should be generated"
+                    ),
                 }),
-                execute: async ({ question }, { toolCallId }) => {
-
+                execute: async ({ question }) => {
                   // Signal that we're generating SQL Query
                   dataStream.writeData({
                     type: "ProcessingState",
@@ -143,26 +127,64 @@ export async function POST(req: NextRequest) {
                   });
 
                   try {
-                    // Step 1: Generate SQL Query
-                    const generatedQuery = await fetchSQLQuery(classification?.question || "", db_connection_id);
-                      console.log(generatedQuery,'dkajksdjajd')
+                    // Generate SQL Query
+                    const generatedQuery = await fetchSQLQuery(
+                      classification?.question || question || "",
+                      db_connection_id
+                    );
+
                     // Check if the response is valid and generated a SQL Query
                     if (!generatedQuery || !generatedQuery?.id) {
                       dataStream.writeData({
                         type: "Error",
                         text: "Failed to generate SQL query.",
                       });
-                      return "Failed to generate SQL query.";
+                      return {
+                        success: false,
+                        error: "Failed to generate SQL query.",
+                      };
                     }
 
-                    // Signal that we're executing SQL Query
+                    // Return the generated query details
+                    return {
+                      success: true,
+                      queryId: generatedQuery?.id,
+                      sql: generatedQuery?.sql,
+                      message: `SQL query generated successfully. Query ID: ${generatedQuery?.id}`,
+                    };
+                  } catch (error) {
+                    console.error("Error generating SQL:", error);
                     dataStream.writeData({
-                      type: "ProcessingState",
-                      state: "executingSQL",
+                      type: "Error",
+                      text: `Failed to generate SQL query: ${error}`,
                     });
+                    return {
+                      success: false,
+                      error: `Failed to generate SQL query: ${error}`,
+                    };
+                  }
+                },
+              }),
 
-                    // Step 2: Execute the SQL Query
-                    const executionResult = await executeSQLQuery(generatedQuery?.id);
+              // Tool 2: Execute SQL Query
+              executeSQLQuery: tool({
+                description:
+                  "Executes a generated SQL query using its query ID",
+                parameters: z.object({
+                  queryId: z
+                    .string()
+                    .describe("The ID of the generated SQL query to execute"),
+                }),
+                execute: async ({ queryId }) => {
+                  // Signal that we're executing SQL Query
+                  dataStream.writeData({
+                    type: "ProcessingState",
+                    state: "executingSQL",
+                  });
+
+                  try {
+                    // Execute the SQL Query
+                    const executionResult = await executeSQLQuery(queryId);
 
                     // Check if the execution result is valid
                     if (!executionResult) {
@@ -170,58 +192,63 @@ export async function POST(req: NextRequest) {
                         type: "Error",
                         text: "Failed to execute SQL Query.",
                       });
-                      return "Failed to execute SQL Query.";
+                      return {
+                        success: false,
+                        error: "Failed to execute SQL Query.",
+                      };
                     }
 
-                    // Step 3: Classify and Generate Insights based on the execution result
-                    // Classify Query Insights
-                    const { object: insightClassification } = await generateObject({
-                      model: azure(process.env.AZURE_OPENAI_DEPLOYMENT_NAME!),
-                      schema: z.object({
-                        category: z.enum([
-                          "trend_analysis",
-                          "anomaly_detection",
-                          "summary",
-                          "unknown",
-                        ]),
-                        reasoning: z.string(),
-                      }),
-                      prompt: `Classify this database query insight:
-                            - User Query: ${classification?.question}
-                            - Query Results: ${JSON.stringify(executionResult)}
-                            - SQL Executed: ${JSON.stringify(
-                              generatedQuery?.sql
-                            )}`,
-                      system:
-                        "You are an expert data analyst. Classify and reason about SQL results.",
+                    // Return execution results
+                    return {
+                      success: true,
+                      queryResults: executionResult,
+                      message: `SQL query executed successfully. Rows returned: ${
+                        Array.isArray(executionResult)
+                          ? executionResult?.length
+                          : 0
+                      }`,
+                    };
+                  } catch (error) {
+                    console.error("Error executing SQL:", error);
+                    dataStream.writeData({
+                      type: "Error",
+                      text: `Failed to execute SQL Query: ${error}`,
                     });
+                    return {
+                      success: false,
+                      error: `Failed to execute SQL Query: ${error}`,
+                    };
+                  }
+                },
+              }),
 
+              // Tool 3: Generate Insights (simplified to avoid extra classification call)
+              generateInsights: tool({
+                description: "Generates insights from SQL execution results",
+                parameters: z.object({
+                  question: z.string().describe("The original user question"),
+                  sql: z.string().describe("The SQL query that was executed"),
+                  results: z
+                    .any()
+                    .describe("The results from the SQL query execution"),
+                }),
+                execute: async ({ question, sql, results }, { toolCallId }) => {
+                  try {
                     // Signal that we're generating insights
                     dataStream.writeData({
                       type: "ProcessingState",
                       state: "generatingInsights",
                     });
 
-                    // Generate Insights and merge into data stream
+                    // Directly stream insights using the summary prompt to reduce extra model call overhead
                     const insightsStream = streamText({
                       model: insightsModel,
-                      system:
-                        insightClassification?.category &&
-                        insightClassification.category in insightsPrompt
-                          ? insightsPrompt[
-                              insightClassification.category as keyof typeof insightsPrompt
-                            ]
-                          : "",
+                      system: insightsPrompt.summary || "",
                       prompt: `Analyze SQL execution result:
                             - User Query: ${classification?.question}
-                            - Classification: ${insightClassification?.reasoning}
-                            - SQL Query: ${JSON.stringify(generatedQuery?.sql)}
-                            - Query Results: ${JSON.stringify(
-                              executionResult,
-                              null,
-                              2
-                            )}
-                            Provide detailed insights in Markdown format.`,
+                          - SQL Query: ${sql}
+                          - Query Results: ${JSON.stringify(results, null, 2)}
+                          Provide detailed, useful insights in Markdown format.`,
                       onChunk({ chunk }) {
                         if (chunk.type === "reasoning") {
                           dataStream?.writeData({
@@ -239,7 +266,33 @@ export async function POST(req: NextRequest) {
                       state: "completed",
                     });
 
-                    // Step 4: Stream SQL Generations
+                    return {
+                      success: true,
+                      message: "Insights generated successfully",
+                      queryInsight: insightsStream,
+                    };
+                  } catch (error) {
+                    console.error("Error generating insights:", error);
+                    dataStream.writeData({
+                      type: "Error",
+                      text: `Failed to generate insights: ${error}`,
+                    });
+                    return {
+                      success: false,
+                      error: `Failed to generate insights: ${error}`,
+                    };
+                  }
+                },
+              }),
+
+              // Tool 4: Stream SQL Generations
+              streamSQLGenerations: tool({
+                description: "Stream additional SQL generation variants",
+                parameters: z.object({
+                  question: z.string().describe("The original user question"),
+                }),
+                execute: async ({ question }) => {
+                  try {
                     // Use streamSQLGenerations with token for streaming SQL generations
                     const streamResponse = await streamSQLGenerations(
                       accessToken,
@@ -253,21 +306,27 @@ export async function POST(req: NextRequest) {
                         type: "Error",
                         text: "Failed to generate and execute SQL query via streaming.",
                       });
-                      return "Failed to generate and execute SQL query via streaming.";
+                      return {
+                        success: false,
+                        error:
+                          "Failed to generate and execute SQL query via streaming.",
+                      };
                     }
 
-                    // Return the SQL and query results
                     return {
-                      sql: generatedQuery?.sql || "",
-                      queryResults: executionResult ? executionResult : [],
+                      success: true,
+                      message: "SQL generation streamed successfully",
                     };
                   } catch (error) {
                     console.error("Error with streamSQLGenerations:", error);
                     dataStream.writeData({
                       type: "Error",
-                      text: `Failed to process SQL query via streaming: ${error}`,
+                      text: `Failed to process SQL query via streaming : ${error}`,
                     });
-                    return "Failed to process SQL query via streaming.";
+                    return {
+                      success: false,
+                      error: `Failed to process SQL query via streaming : ${error}`,
+                    };
                   }
                 },
               }),

@@ -41,7 +41,7 @@ async function getUserRoleFromLoginAPI(
 
   try {
     const response = await axios.post<LoginResponse>(
-      `http://localhost:3591/auth/login`,
+      `http:localhost:3591/auth/login`,
       user,
       {
         headers: {
@@ -51,7 +51,7 @@ async function getUserRoleFromLoginAPI(
       }
     );
 
-    return response.data.role;
+    return response?.data?.role ? response.data.role : "USER";
   } catch (error: any) {
     console.error("Error fetching user role from login API:", error.message);
     return "USER";

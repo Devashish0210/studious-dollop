@@ -1,7 +1,7 @@
 "use client";
 
 // Import necessary modules and components
-import React from "react";
+import React, { useState } from "react";
 import {
     LogOut,
     UserIcon,
@@ -28,16 +28,16 @@ import { cn } from "@/lib/utils";
 
 const navigationItems = [
     // { href: "/", icon: HomeIcon, label: "Dashboards" },
-    { href: "/chat", icon: ChatIcon, label: "Chat" },
+    // { href: "/chat", icon: ChatIcon, label: "Chat" },
     { href: "/databases", icon: DatabasesIcon, label: "Databases" },
     { href: "/queries", icon: QueriesIcon, label: "Queries" },
     // { href: "/golden-sql", icon: GoldenSQLIcon, label: "Golden-SQL" },
     { href: "/organization", icon: OrganizationIcon, label: "Organization" },
-    {
-        href: "/autoresponder-settings",
-        icon: SettingsIcon,
-        label: "Autoresponder Settings",
-    },
+    // {
+    //     href: "/autoresponder-settings",
+    //     icon: SettingsIcon,
+    //     label: "Autoresponder Settings",
+    // },
 ];
 
 interface SidebarUserProfileProps {
@@ -48,11 +48,23 @@ export function SidebarUserProfile({ handleNavigation }: SidebarUserProfileProps
     const { data: session } = useSession();
     const pathname = usePathname();
     const user = session?.user;
+    const [open, setOpen] = useState(false);
+
+    const handleItemClick = (href: string) => {
+        handleNavigation(href);
+        setOpen(false);
+    };
+
+    const handleLogout = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        setOpen(false);
+        signOut({ callbackUrl: "/" });
+    };
 
     return (
         <SidebarMenu>
             <SidebarMenuItem>
-                <DropdownMenu>
+                <DropdownMenu open={open} onOpenChange={setOpen}>
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             className={cn(
@@ -78,6 +90,7 @@ export function SidebarUserProfile({ handleNavigation }: SidebarUserProfileProps
                             </div>
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
+
                     <DropdownMenuContent
                         side="top"
                         align="center"
@@ -88,8 +101,9 @@ export function SidebarUserProfile({ handleNavigation }: SidebarUserProfileProps
                             const active = pathname === item.href;
                             return (
                                 <Link
+                                    key={item.href}
                                     href={item.href}
-                                    onClick={() => handleNavigation(item.href)}
+                                    onClick={() => handleItemClick(item.href)}
                                     className={cn(
                                         "flex items-center gap-3 px-4 py-2 text-sm font-semibold rounded-lg transition-all group",
                                         "hover:text-[var(--color-text-highlight)]",
@@ -106,12 +120,7 @@ export function SidebarUserProfile({ handleNavigation }: SidebarUserProfileProps
                         <DropdownMenuSeparator className="bg-neutral-700" />
                         <Link
                             href="#"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                signOut({
-                                    callbackUrl: "/",
-                                });
-                            }}                            
+                            onClick={handleLogout}
                             className={cn(
                                 "flex items-center gap-3 px-4 py-2 text-sm font-semibold rounded-lg transition-all group",
                                 "hover:text-[var(--color-text-highlight)]",

@@ -15,8 +15,6 @@ const headers = {
 // Tool Used to generate SQL query from the user question (Natural Language)
 export const fetchSQLQuery = async (query: string, db_connection_id:string ) => {
   try {
-    
-    console.log('dkjfnkjnfkjnaskjfnkjanfkjanfkjn')
     const response = await axios.post(
       `${API_ENGINE_URL}/prompts/sql-generations`,
       {
@@ -37,7 +35,6 @@ export const fetchSQLQuery = async (query: string, db_connection_id:string ) => 
       { headers }
     );
 
-    console.log(response,'dkjfnkjnfkjnaskjfnkjanfkjanfkjn')
     return response?.data;
   } catch (error) {
     console.error("Error fetching SQL query:", error);

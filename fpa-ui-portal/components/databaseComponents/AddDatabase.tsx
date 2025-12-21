@@ -45,6 +45,7 @@ enum EDatabaseDialect {
   duckdb = "duckdb",
   bigquery = "bigquery",
   sqlite = "sqlite",
+  aurora = "aurora",
 }
 
 type DatabaseDialect = keyof typeof EDatabaseDialect;
@@ -112,6 +113,33 @@ const DATABASE_PROVIDERS: DatabaseProvider[] = [
     driver: "clickhouse+http",
     dialect: EDatabaseDialect.clickhouse,
     logoUrl: `${STATIC_COPILOT_URL}/images/databases/clickhouse.svg`,
+  },
+  {
+    name: "DuckDB",
+    driver: "duckdb",
+    dialect: EDatabaseDialect.duckdb,
+    logoUrl: `${STATIC_COPILOT_URL}/images/databases/duckdb.svg`,
+  },
+  {
+    name: "SQLite",
+    driver: "sqlite",
+    dialect: EDatabaseDialect.sqlite,
+    logoUrl: `${STATIC_COPILOT_URL}/images/databases/sqlite.svg`,
+  },
+  // Aurora (Postgres-compatible) — use same driver as Postgres for URI builder,
+  // but dialect is 'aurora' so backend can record it.
+  {
+    name: "AWS Aurora",
+    driver: "postgresql+psycopg2",
+    dialect: EDatabaseDialect.aurora,
+    logoUrl: `${STATIC_COPILOT_URL}/images/databases/aws-aurora.svg`,
+  },
+  // AWS Aurora (MySQL) - MySQL-compatible flavor
+  {
+    name: "AWS Aurora (MySQL)",
+    driver: "mysql+pymysql",
+    dialect: EDatabaseDialect.aurora,
+    logoUrl: `${STATIC_COPILOT_URL}/images/databases/aws-aurora.svg`,
   },
 ];
 
@@ -248,11 +276,15 @@ export function AddDatabaseComponent({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md md:max-w-xl">
+      <DialogContent
+        className="sm:max-w-md md:max-w-xl"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl">Add Database</DialogTitle>
           <p className="text-sm text-gray-500">
-            Connect another database to the platform.
+            Connect database to the platform.
           </p>
         </DialogHeader>
 
@@ -460,10 +492,10 @@ export function AddDatabaseComponent({
                 type="submit"
                 variant="outline"
                 className={cn(
-                    "transition-all group",
-                    "text-[var(--color-text-dark)]",
-                    "hover:text-[var(--color-text-highlight)]",
-                    "hover:bg-[var(--color-button-highlight)]",
+                  "transition-all group",
+                  "text-[var(--color-text-dark)]",
+                  "hover:text-[var(--color-text-highlight)]",
+                  "hover:bg-[var(--color-button-highlight)]",
                 )}
                 disabled={isLoading}
               >

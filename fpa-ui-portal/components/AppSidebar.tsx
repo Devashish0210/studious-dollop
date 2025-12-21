@@ -2,7 +2,7 @@
 
 // Import necessary modules and components
 import React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
     Sidebar,
     SidebarContent,
@@ -19,12 +19,19 @@ import { FullScreenLoader } from "./FullScreenLoader";
 import "../app/globals.css";
 import { DropdownMenuSeparator } from "./ui/dropdown-menu";
 import Link from "next/link";
+import { SidebarChatHistory } from "./SidebarChatHistory";
 
+interface Chat {
+    id: string;
+    title: string;
+    createdAt: Date;
+}
 
 export function AppSidebar() {
     const router = useRouter();
     const { setOpenMobile, state } = useSidebar();
     const [isPending, startTransition] = React.useTransition();
+    const pathname = usePathname();
 
     const isOpen = state === "expanded";
 
@@ -54,7 +61,7 @@ export function AppSidebar() {
                     {/* <SidebarUserProfile /> */}
                 </SidebarHeader>
                 <SidebarContent className="px-2 scrollbar-hide">
-                    <SidebarMenu className="flex flex-col gap-4 mt-2 border-b border-neutral-800">
+                    <SidebarMenu className="flex flex-col gap-4 mt-2">
                         <Link
                             href="https://www.microland.com/"
                             className={cn(
@@ -78,7 +85,7 @@ export function AppSidebar() {
                             <SquareArrowOutUpRight className="h-5 w-5" />
                             <span className="text-sm font-medium">Dashboards</span>
                         </Link>
-                        <div className="my-[6.95px] px-2 py-2">
+                        <div className="my-[6.95px] px-2 py-2 border-t border-neutral-800">
                             <Button
                                 onClick={() => handleNavigation("/")}
                                 variant="outline"
@@ -92,6 +99,11 @@ export function AppSidebar() {
                                 <PlusCircle className="h-4 w-4" />
                                 <span className="text-sm font-medium">New Chat</span>
                             </Button>
+
+                            <SidebarChatHistory
+                                currentPath={pathname}
+                                setOpenMobile={setOpenMobile}
+                            />
                         </div>
                     </SidebarMenu>
                 </SidebarContent>

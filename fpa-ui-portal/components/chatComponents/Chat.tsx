@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
-import { fetchGraphType, fetchConnectedDatabases } from "@/lib/api";
+import { fetchGraphType, fetchConnectedDatabases, saveChatMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Send,
@@ -11,8 +11,6 @@ import {
   Code,
   X,
   PanelRight,
-  MessageSquare,
-  Database,
 } from "lucide-react";
 import DataTable from "./DataTable";
 import CustomizableGraph from "./../queryComponents/customizableGraph";
@@ -30,6 +28,7 @@ import {
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import "../../app/globals.css";
 
@@ -47,9 +46,7 @@ interface ExtendedToolInvocation {
     sql: string;
     queryResults: any[];
   };
-  args?: {
-    query?: string;
-  };
+  toolName?: string;
 }
 
 // Define the BotMessage interface
@@ -61,7 +58,8 @@ interface BotMessage {
   insightsContent?: string;
 }
 
-export default function Chat() {
+export default function Chat({ initialChatId, initialMessages }: { initialChatId?: string, initialMessages?: any[] }) {
+  const router = useRouter();
   const { data: session } = useSession();
   const [botMessages, setBotMessages] = useState<BotMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -95,11 +93,15 @@ export default function Chat() {
   const [dbLoading, setDbLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
 
+  // Add state for chat_id and user_id
+  const [chat_id, setChatId] = useState<string | undefined>(initialChatId);
+  const user_id = (session as any)?.user?.id;
+
   // Fetch token from session storage and set it in state
   useEffect(() => {
     setToken((session as any)?.user?.accessToken);
   }, [session]);
-  
+
   // Function to load databases from the API
   const fetchDatabases = useCallback(async () => {
     if (token) {
@@ -110,6 +112,9 @@ export default function Chat() {
         if (dbs?.length > 0) {
           setSelectedDatabaseId(dbs[0]?.db_connection_id);
         }
+        else {
+          router.push("/databases");
+        }
       } catch (err) {
         setDatabases([]);
         console.error("Failed to load databases:", err);
@@ -118,13 +123,13 @@ export default function Chat() {
       }
     };
   }, [token]);
-  
+
   // Load databases when the component mounts
   useEffect(() => {
     fetchDatabases();
   }, [fetchDatabases]);
 
-
+  
   // Check if it's mobile device
   useEffect(() => {
     const checkIsMobile = () => {
@@ -218,56 +223,75 @@ export default function Chat() {
             const messagePart = part as ExtendedMessagePart;
             // Check if the part is a tool invocation
             if (messagePart?.type === "tool-invocation") {
-              const executionResult = messagePart?.toolInvocation?.result;
-
-              // If executionResult is available, process the SQL query results
-              if (executionResult) {
-                const columns = Object.keys(executionResult?.queryResults[0]);
-                const rows = executionResult?.queryResults?.map(
-                  (obj: Record<string, any>) => Object.values(obj)
-                );
-
-                // Store table data
-                hasTable = true;
-                tempTableData = { columns, rows };
-
-                // Store SQL query for code display
-                hasCode = true;
-                tempCodeData =
-                  executionResult?.sql ??
-                  messagePart?.toolInvocation?.args?.query;
-
-                // Get graph recommendations
-                const graphRecommendation = await fetchGraphType(
-                  input,
-                  executionResult?.queryResults
-                );
-                const recommendedGraphType =
-                  graphRecommendation?.recommendedGraphs?.[0] || "bar";
-                const formattedData =
-                  graphRecommendation?.formattedData ||
-                  executionResult?.queryResults;
-
-                // Store graph data
-                hasGraph = true;
-                tempGraphData = {
-                  data: formattedData,
-                  type: recommendedGraphType,
-                };
-
-                responseContent =
-                  "I've analyzed your data. You can view the results as a table, visualization, or see the SQL query used.";
-              } else {
-                responseContent = messagePart?.text || "";
+              const invocationTool = messagePart?.toolInvocation;
+              if (invocationTool?.toolName === "generateSQLQuery") {
+                const executionResult = invocationTool?.result;
+                // If executionResult is available, process the SQL query
+                if (executionResult) {
+                  // Store SQL query
+                  tempCodeData = executionResult?.sql || "No SQL query generated.";
+                  hasCode = true;
+                }
+                else {
+                  tempCodeData = "No SQL query generated.";
+                  hasCode = false;
+                }
               }
-            } else {
-              if (index === 1 || index === 2 || index === 3) {
-                // Collect insights text
-                insightsContent = messagePart?.text ?? "No Insights generated!";
-              } else {
-                // Set response content
-                if (!responseContent) {
-                  responseContent = messagePart?.text || "";
+              else if (invocationTool?.toolName === "executeSQLQuery") {
+                const executionResult = invocationTool?.result;
+                // If executionResult is available, process the SQL query results
+                if (executionResult) {
+                  const columns = Object.keys(executionResult?.queryResults[0]);
+                  const rows = executionResult?.queryResults?.map(
+                    (obj: Record<string, any>) => Object.values(obj)
+                  );
+                  // Store table data
+                  tempTableData = { columns, rows };
+                  hasTable = true;
+
+                  // Get graph recommendations
+                  const graphRecommendation = await fetchGraphType(
+                    input,
+                    executionResult?.queryResults
+                  );
+                  const recommendedGraphType = graphRecommendation?.recommendedGraphs?.[0] || "bar";
+                  const formattedData = graphRecommendation?.formattedData || executionResult?.queryResults;
+
+                  // Store graph data
+                  hasGraph = true;
+                  tempGraphData = {
+                    data: formattedData,
+                    type: recommendedGraphType,
+                  };
+
+                  responseContent = "I've analyzed your data. You can view the results as a table, visualization, or see the SQL query used.";
+                  insightsContent = message?.content || "No Insights generated!";
+                  // Save assistant message
+                  if (user_id && token) {
+                    await saveChatMessage({
+                      user_id,
+                      chat_id,
+                      role: "assistant",
+                      content: responseContent,
+                      token,
+                    });
+                  }
+                }
+              }
+            }
+            else {
+              // Non-tool parts
+              if ((index === 0 || index === 1) && messagePart?.type === "text") {
+                responseContent = messagePart?.text || "No response generated.";
+                // Save assistant message
+                if (user_id && token) {
+                  await saveChatMessage({
+                    user_id,
+                    chat_id,
+                    role: "assistant",
+                    content: responseContent,
+                    token,
+                  });
                 }
               }
             }
@@ -330,7 +354,21 @@ export default function Chat() {
       ...prevMessages,
       { role: "user", content: input },
     ]);
-    // Call handleSubmit with the event
+    // Save user message
+    if (user_id && token) {
+      try {
+        const saved = await saveChatMessage({
+          user_id,
+          chat_id,
+          role: "user",
+          content: input,
+          token,
+        });
+        if (saved?.chat_id) setChatId(saved.chat_id);
+      } catch (error) {
+        console.error("Failed to save chat message:", error);
+      }
+    }
     handleSubmit(e as any);
   };
 
@@ -338,26 +376,19 @@ export default function Chat() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      setLoading(true);
-      setBotMessages((prevMessages) => [
-        ...prevMessages,
-        { role: "user", content: input },
-      ]);
-      // Call handleSubmit with the event
-      handleSubmit(e as any);
+      sendMessage(e as any);
     }
   };
 
   // Add useEffect to set initial message when component mounts
   useEffect(() => {
-    setBotMessages([
-      {
-        role: "assistant",
-        content:
-          "Hello! I am Microland's FPA assistant. I can help you query and analyze your database. What would you like to know?",
-      },
-    ]);
-  }, []);
+    if (initialMessages && initialMessages.length > 0) {
+      setBotMessages(initialMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      })));
+    }
+  }, [initialMessages]);
 
   // Function to get loading message based on current state
   const getLoadingMessage = (switchState: string) => {
@@ -395,7 +426,7 @@ export default function Chat() {
       // Display graph data
       case "graph":
         content = graphData ? (
-          <CustomizableGraph data={graphData.data} />
+          <CustomizableGraph data={graphData?.data} />
         ) : (
           <div className="p-4 text-neutral-500">No graph data available</div>
         );
@@ -434,11 +465,10 @@ export default function Chat() {
     )}>
       {/* Main Chat UI */}
       <div
-        className={`flex-grow flex flex-col h-full overflow-hidden transition-all duration-300 ${
-          isArtifactsPanelOpen && !isMobile
-            ? `pr-${artifactsPanelWidth}px`
-            : "pr-4"
-        }`}
+        className={`flex-grow flex flex-col h-full overflow-hidden transition-all duration-300 ${isArtifactsPanelOpen && !isMobile
+          ? `pr-${artifactsPanelWidth}px`
+          : "pr-4"
+          }`}
         style={{
           height: "calc(100vh - 100px)",
           width:
@@ -452,14 +482,6 @@ export default function Chat() {
           className="flex-grow overflow-y-auto p-4 pb-0 mb-0"
           style={{ maxHeight: "calc(100vh - 180px)" }}
         >
-          {/* <h1 className={cn(
-            "text-3xl font-bold flex items-center justify-center gap-2",
-            "text-[var(--color-text-dark)]"
-          )}>
-            <MessageSquare className="h-6 w-6" />
-            <span>AI Chat with Database</span>
-            <Database className="h-6 w-6" />
-          </h1> */}
           {botMessages?.map((msg, index) => (
             <motion.div
               key={index}

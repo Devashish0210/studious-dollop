@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-
+ 
 const nextConfig: NextConfig = {
   basePath: process.env.NEXT_PUBLIC_BASE_PATH,
   env: {
@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     AZURE_OPENAI_DEPLOYMENT_NAME: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
     AZURE_DB_CONNECTION_ID: process.env.AZURE_DB_CONNECTION_ID,
     AZURE_OPENAI_API_VERSION: process.env.AZURE_OPENAI_API_VERSION,
-
+ 
     AZURE_AD_CLIENT_ID: process.env.AZURE_AD_CLIENT_ID!,
     AZURE_AD_CLIENT_SECRET: process.env.AZURE_AD_CLIENT_SECRET!,
     AZURE_AD_TENANT_ID: process.env.AZURE_AD_TENANT_ID!,
@@ -28,9 +28,9 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-    
+   
     ];
   },
 };
-
+ 
 export default nextConfig;
