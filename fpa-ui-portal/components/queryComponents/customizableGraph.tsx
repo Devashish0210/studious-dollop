@@ -300,33 +300,29 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
         }
 
         return (
-          <div className="w-full h-full flex items-center justify-center overflow-hidden">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <Tooltip
-                  formatter={(value: any) => [value, "Value"]}
-                  labelFormatter={(label: any) => `Category: ${label}`}
-                />
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius="60%"
-                  innerRadius="0%"
-                  label={false}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+      <Tooltip
+        formatter={(value: any) => [value, "Value"]}
+        labelFormatter={(label: any) => `Category: ${label}`}
+      />
+      <Pie
+        data={pieData}
+        dataKey="value"
+        nameKey="name"
+        cx="50%"
+        cy="50%"
+        outerRadius="60%"
+        innerRadius="0%"
+        label={false}
+      >
+        {pieData.map((entry, index) => (
+          <Cell
+            key={`cell-${index}`}
+            fill={COLORS[index % COLORS.length]}
+          />
+        ))}
+      </Pie>
+    </PieChart>
         );
       }
 
@@ -363,7 +359,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
           <div className="space-y-2">
             <label className={cn(
               "block text-sm font-medium",
-              "text-[var(--color-text-dark)]"
+              "text-[var(--color-text-light)]"
             )}>
               Categories (Parts of Whole)
             </label>
@@ -372,10 +368,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
               onChange={(e) => setPieCategory(e.target.value)}
               className={cn(
                 "w-full px-3 py-2 border rounded-md transition-colors",
-                "border-neutral-300 dark:border-neutral-700",
-                "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                "text-[var(--color-text-dark)]",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
+                "bg-neutral-800 border-neutral-700 text-[var(--color-text-light)] focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
               )}
             >
               {categoryKeys?.map((key) => (
@@ -390,7 +383,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
           <div className="space-y-2">
             <label className={cn(
               "block text-sm font-medium",
-              "text-[var(--color-text-dark)]"
+              "text-[var(--color-text-light)]"
             )}>
               Values (Size of Parts)
             </label>
@@ -399,10 +392,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
               onChange={(e) => setPieValue(e.target.value)}
               className={cn(
                 "w-full px-3 py-2 border rounded-md transition-colors",
-                "border-neutral-300 dark:border-neutral-700",
-                "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                "text-[var(--color-text-dark)]",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
+                 "bg-neutral-800 border-neutral-700 text-[var(--color-text-light)] focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
               )}
             >
               {numericKeys.length > 0
@@ -423,7 +413,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
           <div className="space-y-2">
             <label className={cn(
               "block text-sm font-medium",
-              "text-[var(--color-text-dark)]"
+              "text-[var(--color-text-light)]"
             )}>
               Chart Type
             </label>
@@ -436,10 +426,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
               }
               className={cn(
                 "w-full px-3 py-2 border rounded-md transition-colors",
-                "border-neutral-300 dark:border-neutral-700",
-                "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                "text-[var(--color-text-dark)]",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
+                "bg-neutral-800 border-neutral-700 text-[var(--color-text-light)] focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
               )}
             >
               <option value="line">Line Chart</option>
@@ -459,7 +446,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
           <div className="space-y-2">
             <label className={cn(
               "block text-sm font-medium",
-              "text-[var(--color-text-dark)]"
+               "text-[var(--color-text-light)]"
             )}>
               X-Axis Data
             </label>
@@ -468,10 +455,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
               onChange={(e) => setXAxis(e.target.value)}
               className={cn(
                 "w-full px-3 py-2 border rounded-md transition-colors",
-                "border-neutral-300 dark:border-neutral-700",
-                "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                "text-[var(--color-text-dark)]",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
+                "bg-neutral-800 border-neutral-700 text-[var(--color-text-light)] focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
               )}
             >
               {availableKeys?.map((key) => (
@@ -486,7 +470,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
           <div className="space-y-2">
             <label className={cn(
               "block text-sm font-medium",
-              "text-[var(--color-text-dark)]"
+              "text-[var(--color-text-light)]"
             )}>
               Y-Axis Data
             </label>
@@ -495,10 +479,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
               onChange={(e) => setYAxis(e.target.value)}
               className={cn(
                 "w-full px-3 py-2 border rounded-md transition-colors",
-                "border-neutral-300 dark:border-neutral-700",
-                "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                "text-[var(--color-text-dark)]",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
+                "bg-neutral-800 border-neutral-700 text-[var(--color-text-light)] focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
               )}
             >
               {availableKeys?.map((key) => (
@@ -514,7 +495,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
           <div className="space-y-2">
             <label className={cn(
               "block text-sm font-medium",
-              "text-[var(--color-text-dark)]"
+              "text-[var(--color-text-light)]"
             )}>
               Chart Type
             </label>
@@ -527,10 +508,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
               }
               className={cn(
                 "w-full px-3 py-2 border rounded-md transition-colors",
-                "border-neutral-300 dark:border-neutral-700",
-                "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                "text-[var(--color-text-dark)]",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
+                "bg-neutral-800 border-neutral-700 text-[var(--color-text-light)] focus:outline-none focus:ring-2 focus:ring-[var(--color-text-highlight)] focus:border-transparent"
               )}
             >
               <option value="line">Line Chart</option>
@@ -562,20 +540,18 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
 
     return (
       <div className={cn(
-        "mt-4 border rounded-lg overflow-hidden",
-        "border-neutral-300 dark:border-neutral-700"
+        "mt-4 border rounded-lg overflow-hidden bg-neutral-800 border-neutral-700"
       )}>
         <button
           onClick={() => setIsAccordionOpen(!isAccordionOpen)}
           className={cn(
             "w-full px-4 py-3 flex items-center justify-between text-left transition-colors",
-            "bg-neutral-50 dark:bg-neutral-800",
             "hover:bg-[var(--color-button-highlight)]"
           )}
         >
           <span className={cn(
             "text-sm font-medium",
-            "text-[var(--color-text-dark)]"
+            "text-[var(--color-text-light)]"
           )}>
             Chart Details ({pieData.length} items)
           </span>
@@ -588,9 +564,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
 
         {isAccordionOpen && (
           <div className={cn(
-            "px-4 py-3 border-t",
-            "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-            "border-neutral-300 dark:border-neutral-700"
+            "px-4 py-3 border-t bg-neutral-900 border-neutral-700"
           )}>
             <div className="space-y-2">
               {pieData?.map((item, index) => {
@@ -601,7 +575,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
                     key={index}
                     className={cn(
                       "flex items-center justify-between py-2 border-b last:border-b-0",
-                      "border-neutral-200 dark:border-neutral-700"
+                      "border-neutral-700"
                     )}
                   >
                     <div className="flex items-center space-x-3">
@@ -613,7 +587,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
                       />
                       <span className={cn(
                         "text-sm font-medium",
-                        "text-[var(--color-text-dark)]"
+                        "text-[var(--color-text-light)]"
                       )}>
                         {item.name}
                       </span>
@@ -621,7 +595,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
                     <div className="text-right">
                       <div className={cn(
                         "text-sm font-semibold",
-                        "text-[var(--color-text-dark)]"
+                        "text-[var(--color-text-light)]"
                       )}>
                         {item.value.toLocaleString()}
                       </div>
@@ -631,19 +605,18 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
                 );
               })}
               <div className={cn(
-                "pt-2 mt-2 border-t",
-                "border-neutral-300 dark:border-neutral-700"
+                "pt-2 mt-2 border-t border-neutral-700"
               )}>
                 <div className="flex items-center justify-between">
                   <span className={cn(
                     "text-sm font-medium",
-                    "text-[var(--color-text-dark)]"
+                    "text-[var(--color-text-light)]"
                   )}>
                     Total
                   </span>
                   <span className={cn(
                     "text-sm font-semibold",
-                    "text-[var(--color-text-dark)]"
+                    "text-[var(--color-text-light)]"
                   )}>
                     {total.toLocaleString()}
                   </span>
@@ -664,7 +637,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
       {!hideTitle && (
         <h2 className={cn(
           "text-2xl font-bold mb-6",
-          "text-[var(--color-text-dark)]"
+          "text-[var(--color-text-light)]"
         )}>
           Data Visualization
         </h2>
@@ -674,9 +647,7 @@ const CustomizableGraph: React.FC<CustomizableGraphProps> = ({
       {renderControls()}
 
       {/* Chart Container */}
-      <div className={cn(
-        "w-full h-96 rounded-lg overflow-hidden",
-      )}>
+      <div className="w-full h-96 rounded-lg overflow-hidden bg-neutral-900 border border-neutral-700">
         <ResponsiveContainer width="100%" height="100%">
           {renderChart()}
         </ResponsiveContainer>

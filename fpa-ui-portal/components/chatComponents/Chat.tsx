@@ -25,12 +25,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import "../../app/globals.css";
+import { AIInput } from "../InputWithSelectDatabase";
 
 // Define the type definition of the ExtendedMessagePart
 interface ExtendedMessagePart {
@@ -459,9 +458,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
 
   return (
     <div className={cn(
-      "flex h-full relative overflow-hidden",
-      "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-      "text-[var(--color-text-dark)]"
+      "flex h-full relative overflow-hidden bg-[var(--color-bg-dark)] text-[var(--color-text-light)]"
     )}>
       {/* Main Chat UI */}
       <div
@@ -490,15 +487,15 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
               transition={{ duration: 0.3 }}
               className="mb-4 md:mb-6"
             >
-              <div className="flex">
                 {/* All messages aligned to the left */}
-                <div className="flex items-start">
+                <div className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+            <div className={cn("flex items-start max-w-[80%]", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
                   <div
                     className={cn(
                       "p-2 md:p-3 rounded-2xl text-sm md:text-base break-words",
                       msg?.role === "user"
                         ? "bg-[var(--color-button-highlight)] text-[var(--color-text-highlight)] rounded-tl-none"
-                        : "bg-neutral-100 dark:bg-neutral-800 text-[var(--color-text-dark)]"
+                        : "bg-neutral-800 text-[var(--color-text-light)]"
                     )}
                   >
                     {msg?.role === "assistant" && "responseContent" in msg ? (
@@ -521,7 +518,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
                                 "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
                                 "border border-neutral-300 dark:border-neutral-700",
                                 "text-[var(--color-text-dark)]",
-                                "hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
+                                "bg-[var(--color-bg-dark)] border border-neutral-700 text-[var(--color-text-light)] hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
                               )}
                             >
                               <PanelRight className="h-4 w-4" />
@@ -572,80 +569,18 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
         </div>
 
         {/* Input Field for the user to Chat */}
-        <form
-          onSubmit={sendMessage}
-          className="sticky bottom-0 w-full px-4 pt-4"
-        >
-          <div className={cn(
-            "relative border focus-within:border-neutral-600",
-            "bg-neutral-200 dark:bg-neutral-800",
-            "border-neutral-700"
-          )}>
-            <Input
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask any question related to your data present in database..."
-              className={cn(
-                "w-full resize-none pr-12 py-7",
-                "bg-neutral-200 dark:bg-neutral-800",
-                "text-[var(--color-text-dark)]",
-                "placeholder:text-neutral-500",
-                "border-0 focus-visible:ring-0"
-              )}
-            />
-            <div>
-              <Select
-                value={selectedDatabaseId ?? ""}
-                onValueChange={setSelectedDatabaseId}
-                disabled={dbLoading || databases?.length === 0}
-              >
-                <SelectTrigger className={cn(
-                  "w-44 h-12 border-2 bg-white text-sm font-semibold transition",
-                  "border-neutral-200 dark:border-neutral-700",
-                  "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                  "text-[var(--color-text-dark)]",
-                  "hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]",
-                  "focus:ring-2 focus:ring-[var(--color-text-highlight)]"
-                )}>
-                  <SelectValue placeholder={loading ? "Loading..." : "Database"} />
-                </SelectTrigger>
-                <SelectContent className={cn(
-                  "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                  "border border-neutral-300 dark:border-neutral-700"
-                )}>
-                  {databases?.map((db: any) => (
-                    <SelectItem
-                      key={db?.db_connection_id}
-                      value={db?.db_connection_id}
-                      className={cn(
-                        "text-[var(--color-text-dark)]",
-                        "hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
-                      )}
-                    >
-                      {db?.db_connection_alias || db?.db_connection_id}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="submit"
-                disabled={input.trim() === ""}
-                className={cn(
-                  "absolute right-3 bottom-3 h-8 w-16 p-0 transition-all",
-                  "bg-neutral-700 dark:bg-neutral-600",
-                  "hover:bg-neutral-600 dark:hover:bg-neutral-500"
-                )}
-              >
-                {loading ? (
-                  <span className="text-xs">Thinking...</span>
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        </form>
+        <div className="sticky bottom-0 w-full px-4 pb-4">
+      <AIInput
+        input={input}
+        handleInputChange={handleInputChange}
+        handleSubmit={sendMessage}
+        isLoading={loading}
+        databases={databases}
+        selectedDatabaseId={selectedDatabaseId}
+        setSelectedDatabaseId={setSelectedDatabaseId}
+        dbLoading={dbLoading}
+      />
+    </div>
       </div>
 
       {/* Render mobile artifacts panel or desktop artifacts panel */}
@@ -662,9 +597,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
             {/* Artifacts Panel */}
             <div
               className={cn(
-                "border-l shadow-lg overflow-y-auto transition-all duration-300",
-                "bg-neutral-50 dark:bg-neutral-900",
-                "border-neutral-700"
+                "border-l shadow-lg overflow-y-auto transition-all duration-300 bg-neutral-900 border-neutral-700"
               )}
               style={{
                 width: artifactsPanelWidth,
@@ -674,8 +607,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
               <div className="px-4 pt-4 h-full flex flex-col">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className={cn(
-                    "text-lg font-medium",
-                    "text-[var(--color-text-dark)]"
+                    "text-lg font-medium text-[var(--color-text-light)]"
                   )}>
                     Artifacts
                   </h3>
@@ -699,8 +631,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
                   className="w-full"
                 >
                   <TabsList className={cn(
-                    "grid grid-cols-3 mb-2",
-                    "bg-neutral-200 dark:bg-neutral-800"
+                    "grid grid-cols-3 mb-2 bg-neutral-800"
                   )}>
                     <TabsTrigger
                       value="table"
@@ -741,9 +672,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
                   </TabsList>
 
                   <div className={cn(
-                    "flex-grow overflow-auto border rounded-lg p-3",
-                    "border-neutral-700",
-                    "bg-neutral-50 dark:bg-neutral-900"
+                    "flex-grow overflow-auto border rounded-lg p-3 border-neutral-700 bg-neutral-900"
                   )}>
                     {sidebarContent}
                   </div>
@@ -760,8 +689,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
               onClick={() => setShowMobileSheet(true)}
               className={cn(
                 "fixed bottom-20 right-4 z-20 flex items-center gap-2 transition-all",
-                "bg-neutral-800 dark:bg-neutral-700",
-                "hover:bg-neutral-700 dark:hover:bg-neutral-600"
+                "bg-neutral-700 hover:bg-neutral-600"
               )}
               size="sm"
             >
@@ -772,14 +700,12 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
 
           <Sheet open={showMobileSheet} onOpenChange={setShowMobileSheet}>
             <SheetContent side="right" className={cn(
-              "w-full sm:max-w-full p-0",
-              "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]"
+              "w-full sm:max-w-full p-0 bg-[var(--color-bg-dark)]"
             )}>
               <SheetHeader className={cn(
-                "p-4 border-b",
-                "border-neutral-700"
+                "p-4 border-b border-neutral-700"
               )}>
-                <SheetTitle className="text-[var(--color-text-dark)]">
+                <SheetTitle className="text-[var(--color-text-light)]">
                   Artifacts
                 </SheetTitle>
               </SheetHeader>
@@ -790,8 +716,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
                   className="w-full"
                 >
                   <TabsList className={cn(
-                    "grid grid-cols-3 mb-4",
-                    "bg-neutral-200 dark:bg-neutral-800"
+                     "grid grid-cols-3 mb-4 bg-neutral-800"
                   )}>
                     <TabsTrigger
                       value="table"
@@ -820,9 +745,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
                   </TabsList>
 
                   <div className={cn(
-                    "flex-grow overflow-auto border rounded-lg p-3",
-                    "border-neutral-700",
-                    "bg-neutral-50 dark:bg-neutral-900"
+                    "flex-grow overflow-auto border rounded-lg p-3 border-neutral-700 bg-neutral-900"
                   )}>
                     {sidebarContent}
                   </div>

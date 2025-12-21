@@ -36,10 +36,7 @@ export default function Insights({ insights }: InsightsProps) {
         <Button
           className={cn(
             "transition-all",
-            "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-            "border border-neutral-300 dark:border-neutral-700",
-            "text-[var(--color-text-dark)]",
-            "hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
+            "bg-neutral-800 border-neutral-700 text-[var(--color-text-light)] hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
           )}
           onClick={handleCopy}
           variant="outline"
@@ -57,7 +54,7 @@ export default function Insights({ insights }: InsightsProps) {
         </Button>
       </div>
 
-      <div className="text-black border rounded-md bg-gray-50 p-4 text-left">
+      <div className="text-white border border-neutral-700 rounded-md bg-neutral-800 p-4 text-left">
         <ReactMarkdown>{insights}</ReactMarkdown>
       </div>
     </motion.div>

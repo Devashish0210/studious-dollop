@@ -19,7 +19,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "./ui/sidebar";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "./ui/sidebar";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
@@ -49,6 +49,8 @@ export function SidebarUserProfile({ handleNavigation }: SidebarUserProfileProps
     const pathname = usePathname();
     const user = session?.user;
     const [open, setOpen] = useState(false);
+    const { state } = useSidebar();
+    const isOpen = state === "expanded";
 
     const handleItemClick = (href: string) => {
         handleNavigation(href);
@@ -68,25 +70,27 @@ export function SidebarUserProfile({ handleNavigation }: SidebarUserProfileProps
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             className={cn(
-                                "transition-all duration-200 group",
-                                "text-[var(--color-text-dark)]",
-                                "hover:text-[var(--color-text-highlight)]",
-                                "hover:bg-[var(--color-button-highlight)]"
+                                "transition-all duration-200 group h-12 rounded-full hover:bg-neutral-800",
+                                !isOpen && "justify-center w-10 h-10 p-0"
                             )}
                         >
-                            <div className="flex items-center">
+                            <div className={cn("flex items-center gap-3", !isOpen && "justify-center")}>
                                 {user?.image ? (
                                     <Image
                                         src={user.image}
-                                        className="h-6 w-6 shrink-0 rounded-full mr-3"
+                                        className="h-8 w-8 shrink-0 rounded-full"
                                         width={24}
                                         height={24}
                                         alt="Avatar"
                                     />
                                 ) : (
-                                    <UserIcon className="h-5 w-5 mr-3 transition-colors" />
+                                    <UserIcon className="h-6 w-6 text-neutral-400 transition-colors" />
                                 )}
-                                <span className="truncate">{user?.name || user?.email || "User"}</span>
+                                {isOpen && (
+        <div className="flex flex-col text-left">
+          <span className="text-sm font-medium text-neutral-200 truncate max-w-[150px]">{user?.name || "User"}</span>
+        </div>
+      )}
                             </div>
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
@@ -95,7 +99,7 @@ export function SidebarUserProfile({ handleNavigation }: SidebarUserProfileProps
                         side="top"
                         align="center"
                         sideOffset={4}
-                        className="w-[var(--radix-popper-anchor-width)] min-w-[var(--radix-popper-anchor-width)] border-neutral-700"
+                        className="w-56 border-neutral-700 bg-neutral-900 text-neutral-200"
                     >
                         {navigationItems.map((item) => {
                             const active = pathname === item.href;
@@ -106,10 +110,10 @@ export function SidebarUserProfile({ handleNavigation }: SidebarUserProfileProps
                                     onClick={() => handleItemClick(item.href)}
                                     className={cn(
                                         "flex items-center gap-3 px-4 py-2 text-sm font-semibold rounded-lg transition-all group",
-                                        "hover:text-[var(--color-text-highlight)]",
+                                        "hover:bg-neutral-800",
                                         active
-                                            ? "bg-[var(--color-button-highlight)] text-[var(--color-text-highlight)]"
-                                            : "text-[var(--color-text-dark)]",
+                                            ? "bg-neutral-800 text-white"
+                                            : "text-neutral-400",
                                     )}
                                 >
                                     <item.icon className="h-5 w-5" />
@@ -122,8 +126,7 @@ export function SidebarUserProfile({ handleNavigation }: SidebarUserProfileProps
                             href="#"
                             onClick={handleLogout}
                             className={cn(
-                                "flex items-center gap-3 px-4 py-2 text-sm font-semibold rounded-lg transition-all group",
-                                "hover:text-[var(--color-text-highlight)]",
+                                "flex items-center gap-3 px-4 py-2 text-sm font-semibold rounded-lg transition-all group hover:bg-neutral-800 text-neutral-400 hover:text-white",
                             )}
                         >
                             <LogOut className="h-5 w-5" />

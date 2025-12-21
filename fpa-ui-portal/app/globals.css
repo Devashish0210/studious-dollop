@@ -46,46 +46,6 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #ffffff;
-  --foreground: #252525;
-  --card: #ffffff;
-  --card-foreground: #252525;
-  --popover: #ffffff;
-  --popover-foreground: #252525;
-  --primary: #343434;
-  --primary-foreground: #ffffff;
-  --secondary: #f7f7f7;
-  --secondary-foreground: #343434;
-  --muted: #f7f7f7;
-  --muted-foreground: #8e8e8e;
-  --accent: #f7f7f7;
-  --accent-foreground: #343434;
-  --destructive: #dc2626;
-  --border: #ebebeb;
-  --input: #ebebeb;
-  --ring: #b5b5b5;
-  --chart-1: #f59e0b;
-  --chart-2: #06b6d4;
-  --chart-3: #3b82f6;
-  --chart-4: #84cc16;
-  --chart-5: #eab308;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #252525;
-  --sidebar-primary: #343434;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ffffff;
-  --sidebar-accent-foreground: #343434;
-  --sidebar-border: #ebebeb;
-  --sidebar-ring: #b5b5b5;
-  --color-bg-dark: #18181b;
-  --color-bg-light: #fff;
-  --color-text-light: #fff;
-  --color-text-dark: #000;
-  --color-text-highlight: #dc2626;
-  --color-button-highlight: #fecaca;
-}
-
-.dark {
   --background: #252525;
   --foreground: #fafafa;
   --card: #18181b;
@@ -131,8 +91,8 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: white;
-    color: black;
+    background: #18181b;
+    color: #f3f4f6;
   }
   .dark body {
     @apply bg-background text-foreground;

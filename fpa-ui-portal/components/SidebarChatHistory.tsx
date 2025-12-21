@@ -53,7 +53,7 @@ export function SidebarChatHistory({
 
   return (
     <div className="space-y-1">
-      <div className="text-xs text-zinc-400 px-2 mb-1">
+       <div className="text-xs font-medium text-neutral-500 px-1 mb-1 uppercase tracking-wider">
         {loading ? "Loading chats..." : chats.length === 0 ? "No chats yet" : "Recent chats"}
       </div>
       {loading ? (
@@ -66,17 +66,15 @@ export function SidebarChatHistory({
                 asChild
                 isActive={currentPath === `/chat/${chat.id}`}
                 className={
-                  currentPath === `/chat/${chat.id}`
-                    ? "bg-neutral-700/40 text-white"
-                    : "hover:bg-neutral-700/20 text-zinc-300"
+                  "group flex items-center gap-3 px-3 py-2 text-sm rounded-full text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
                 }
               >
                 <Link
                   href={`/chat/${chat.id}`}
                   onClick={() => setOpenMobile(false)}
-                  className="flex items-center"
+                  className="flex items-center w-full"
                 >
-                  <MessageSquare className="mr-2 h-4 w-4 text-zinc-400" />
+                  <MessageSquare className="h-4 w-4 mr-3 shrink-0" />
                   <span className="truncate">{chat.title || "New conversation"}</span>
                 </Link>
               </SidebarMenuButton>

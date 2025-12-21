@@ -42,11 +42,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body
-        className="font-sans antialiased
-          bg-[var(--color-bg-light)]
-          text-[var(--color-text-dark)]
-          dark:bg-[var(--color-bg-dark)]
-          dark:text-[var(--color-text-light)]"
+          className="font-sans antialiased bg-[var(--color-bg-dark)] text-[var(--color-text-light)]"
       >
         {/* Session Wrapper for Authentication and Session management */}
         <SessionWrapper>

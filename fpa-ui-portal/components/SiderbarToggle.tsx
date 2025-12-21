@@ -1,6 +1,6 @@
 import { useSidebar } from "./ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { SidebarOpen, SidebarClose } from "lucide-react";
+import { Menu } from "lucide-react";
 
 export function SidebarToggle() {
     const { toggleSidebar, state } = useSidebar();
@@ -11,14 +11,10 @@ export function SidebarToggle() {
             <TooltipTrigger asChild>
                 <button
                     onClick={toggleSidebar}
-                    className="p-2 rounded-md bg-neutral-800/50 text-[var(--color-text-light)] hover:text-[var(--color-text-highlight)] hover:bg-[var(--color-button-highlight)] transition-colors"
+                    className="p-2 ml-2 mt-2 rounded-full hover:bg-neutral-800 text-[var(--color-text-light)] transition-colors"
                     aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
                 >
-                    {isOpen ? (
-                        <SidebarClose size={18} />
-                    ) : (
-                        <SidebarOpen size={18} />
-                    )}
+                    <Menu size={20} />
                 </button>
             </TooltipTrigger>
             <TooltipContent

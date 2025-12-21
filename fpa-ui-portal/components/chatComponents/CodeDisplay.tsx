@@ -39,10 +39,7 @@ export default function CodeDisplay({ sqlQuery }: CodeDisplayProps) {
         <Button
           className={cn(
             "transition-all",
-            "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-            "border border-neutral-300 dark:border-neutral-700",
-            "text-[var(--color-text-dark)]",
-            "hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
+            "bg-neutral-800 border-neutral-700 text-[var(--color-text-light)] hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
           )}
           onClick={handleCopy}
           variant="outline"

@@ -58,7 +58,7 @@ export default function DataTable({ data }: DataTableProps) {
       <div className="flex justify-between items-center p-5">
         <h2 className={cn(
           "text-lg font-semibold flex items-center",
-          "text-[var(--color-text-dark)]"
+          "text-[var(--color-text-light)]"
         )}>
           <Database className="w-5 h-5 mr-2 text-blue-500" />
           Query Results
@@ -69,10 +69,7 @@ export default function DataTable({ data }: DataTableProps) {
           size="sm"
           className={cn(
             "transition-all",
-            "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-            "border border-neutral-300 dark:border-neutral-700",
-            "text-[var(--color-text-dark)]",
-            "hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
+            "bg-neutral-800 border-neutral-700 text-[var(--color-text-light)] hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
           )}
         >
           <Download className="w-4 h-4 mr-1" /> Export CSV
@@ -80,15 +77,15 @@ export default function DataTable({ data }: DataTableProps) {
       </div>
 
       <CardContent className={cn(
-        "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]"
+        "bg-[var(--color-bg-dark)]"
       )}>
         <div className={cn(
           "h-75 border rounded-md overflow-auto",
-          "border-neutral-300 dark:border-neutral-700"
+          "border-neutral-700 bg-neutral-900"
         )}>
           <Table>
             <TableHeader className={cn(
-              "bg-neutral-700 dark:bg-neutral-800"
+               "bg-neutral-800"
             )}>
               <TableRow className="border-b">
                 {data?.columns?.map((col, idx) => (
@@ -106,19 +103,18 @@ export default function DataTable({ data }: DataTableProps) {
                 <TableRow
                   key={rowIndex}
                   className={cn(
-                    "border-b transition-colors",
-                    "border-neutral-200 dark:border-neutral-700",
+                    "border-b border-neutral-700 transition-colors",
                     "hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]",
                     rowIndex % 2 === 0
-                      ? "bg-white dark:bg-neutral-800"
-                      : "bg-neutral-100 dark:bg-neutral-700"
+                      ? "bg-neutral-800"
+                : "bg-neutral-700"
                   )}
                 >
                   {row?.map((cell, cellIndex) => (
                     <TableCell key={cellIndex}
                       className={cn(
                         "py-2 px-4",
-                        "text-[var(--color-text-dark)]"
+                        "text-[var(--color-text-light)]",
                       )}
                     >
                       {cell !== null && cell !== undefined ? String(cell) : "—"}

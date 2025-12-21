@@ -52,62 +52,64 @@ export function AppSidebar() {
             {isPending && <FullScreenLoader />}
             <Sidebar
                 className={cn(
-                    "border-r border-neutral-800 scrollbar-hide",
-                    "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                    "text-[var(--color-text-dark)]",
-                    !isOpen && "hidden md:block"
+                    "border-r border-neutral-800 scrollbar-hide bg-[var(--color-bg-dark)] text-[var(--color-text-light)]",
                 )}>
-                <SidebarHeader className="border-b border-neutral-800 flex items-center justify-between px-2 py-2">
+                <SidebarHeader className="border-neutral-800 flex items-center justify-between px-2 py-2">
                     {/* <SidebarUserProfile /> */}
                 </SidebarHeader>
                 <SidebarContent className="px-2 scrollbar-hide">
-                    <SidebarMenu className="flex flex-col gap-4 mt-2">
+                    <SidebarMenu className="flex flex-col gap-2 mt-2">
+
+                               <div className={cn("mb-4", !isOpen && "flex justify-center")}>
+        <Button
+          onClick={() => handleNavigation("/")}
+          className={cn(
+            "rounded-full transition-all group",
+            isOpen 
+              ? "w-full justify-start px-4 py-6 bg-neutral-800 text-neutral-300 hover:bg-neutral-700" 
+              : "w-10 h-10 p-0 bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center"
+          )}
+        >
+          <PlusCircle className={cn("h-5 w-5", isOpen && "mr-3")} />
+          {isOpen && <span className="text-sm font-medium">New Chat</span>}
+        </Button>
+      </div>
+      
+
                         <Link
                             href="https://www.microland.com/"
                             className={cn(
-                                "flex items-center gap-3 px-4 py-2 text-sm font-semibold rounded-lg transition-all group",
-                                "hover:text-[var(--color-text-highlight)]",
-                                "text-[var(--color-text-dark)]",
+                                "flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-full transition-all group",
+                                "hover:bg-neutral-800 text-neutral-300",
+                                !isOpen && "justify-center px-2"
                             )}
                         >
                             <House className="h-5 w-5" />
-                            <span className="text-sm font-medium">Vist Us</span>
+                            {isOpen && <span>Home</span>}
                         </Link>
                         <Link
                             href="https://ai.microland.com/copilot/insights/fusion/dashboards"
                             onClick={() => handleNavigation("https://ai.microland.com/copilot/insights/fusion/dashboards")}
                             className={cn(
-                                "flex items-center gap-3 px-4 py-2 text-sm font-semibold rounded-lg transition-all group",
-                                "hover:text-[var(--color-text-highlight)]",
-                                "text-[var(--color-text-dark)]",
+                                "flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-full transition-all group",
+                                "hover:bg-neutral-800 text-neutral-300",
+                                !isOpen && "justify-center px-2"
                             )}
                         >
                             <SquareArrowOutUpRight className="h-5 w-5" />
-                            <span className="text-sm font-medium">Dashboards</span>
+                            {isOpen && <span>Dashboards</span>}
                         </Link>
-                        <div className="my-[6.95px] px-2 py-2 border-t border-neutral-800">
-                            <Button
-                                onClick={() => handleNavigation("/")}
-                                variant="outline"
-                                className={cn(
-                                    "w-full flex items-center gap-2 px-3 py-2 rounded-md transition-all group",
-                                    "text-[var(--color-text-dark)]",
-                                    "hover:bg-[var(--color-button-highlight)]",
-                                    "hover:text-[var(--color-text-highlight)]"
-                                )}
-                            >
-                                <PlusCircle className="h-4 w-4" />
-                                <span className="text-sm font-medium">New Chat</span>
-                            </Button>
-
-                            <SidebarChatHistory
-                                currentPath={pathname}
-                                setOpenMobile={setOpenMobile}
-                            />
-                        </div>
+                        {isOpen && (
+        <div className="mt-4 px-4">
+          <SidebarChatHistory
+            currentPath={pathname}
+            setOpenMobile={setOpenMobile}
+          />
+        </div>
+      )}
                     </SidebarMenu>
                 </SidebarContent>
-                <SidebarFooter className="border-t border-neutral-800 px-2 py-2">
+                <SidebarFooter className="px-2 py-4">
                     <SidebarUserProfile handleNavigation={handleNavigation} />
                 </SidebarFooter>
             </Sidebar>

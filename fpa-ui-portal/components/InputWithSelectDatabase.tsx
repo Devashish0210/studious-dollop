@@ -63,11 +63,13 @@ export const AIInput = ({
                     className="relative flex flex-col"
                 >
                     {/* Textarea */}
-                    <div className="relative">
+                   <div className="relative rounded-xl bg-neutral-800 border border-neutral-700 focus-within:ring-2 focus-within:ring-[var(--color-text-highlight)] overflow-hidden">
                         <Textarea
                             value={input}
                             placeholder={placeholder}
-                            className={cn("w-full rounded-xl px-4 py-3 pr-24 bg-white/5 border-none text-[var(--color-text-dark)] placeholder:text-white/70 resize-none focus-visible:ring-0 leading-[1.2]")}
+                            className={cn(
+                "w-full min-h-[60px] max-h-[200px] px-4 py-3 pb-12 bg-transparent border-none text-[var(--color-text-light)] placeholder:text-neutral-500 resize-none focus-visible:ring-0 leading-relaxed"
+              )}
                             ref={textareaRef}
                             onChange={(e) => {
                                 handleInputChange(e);
@@ -92,12 +94,7 @@ export const AIInput = ({
                             >
                                 <SelectTrigger
                                     className={cn(
-                                        "w-40 h-8 border text-xs font-semibold transition",
-                                        "border-neutral-300 dark:border-neutral-700",
-                                        "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                                        "text-[var(--color-text-dark)]",
-                                        "hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]",
-                                        "focus:ring-2 focus:ring-[var(--color-text-highlight)]"
+                                        "h-8 border-none text-xs font-medium transition-colors bg-neutral-700/50 text-neutral-300 hover:bg-neutral-700 hover:text-neutral-100 rounded-lg px-3 gap-2"
                                     )}
                                 >
                                     <SelectValue
@@ -106,8 +103,7 @@ export const AIInput = ({
                                 </SelectTrigger>
                                 <SelectContent
                                     className={cn(
-                                        "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                                        "border border-neutral-300 dark:border-neutral-700"
+                                        "bg-neutral-800 border-neutral-700 text-neutral-200"
                                     )}
                                 >
                                     {databases?.map((db: any) => (
@@ -115,8 +111,7 @@ export const AIInput = ({
                                             key={db?.db_connection_id}
                                             value={db?.db_connection_id}
                                             className={cn(
-                                                "text-[var(--color-text-dark)]",
-                                                "hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
+                                                "focus:bg-neutral-700 focus:text-neutral-100 cursor-pointer"
                                             )}
                                         >
                                             {db?.db_connection_alias || db?.db_connection_id}
@@ -127,13 +122,13 @@ export const AIInput = ({
                         </div>
 
                         {/* Send button in bottom-right corner */}
+                        {input.trim() !== "" && (
                         <Button
                             type="submit"
                             disabled={input.trim() === "" || isLoading}
                             className={cn(
-                                "absolute right-3 bottom-3 h-8 w-16 p-0 transition-all",
-                                "bg-neutral-700 dark:bg-neutral-600",
-                                "hover:bg-neutral-600 dark:hover:bg-neutral-500"
+                                "absolute right-3 bottom-3 h-8 w-8 p-0 rounded-lg transition-all",
+                "bg-[var(--color-text-highlight)] hover:bg-[var(--color-text-highlight)]/90 text-white"
                             )}
                         >
                             {isLoading ? (
@@ -142,6 +137,7 @@ export const AIInput = ({
                                 <Send className="h-4 w-4" />
                             )}
                         </Button>
+                        )}
                     </div>
                 </form>
             </div>
