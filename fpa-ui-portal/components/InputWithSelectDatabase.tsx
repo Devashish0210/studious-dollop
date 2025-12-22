@@ -85,8 +85,8 @@ export const AIInput = ({
                             disabled={isLoading}
                         />
 
-                        {/* Inline Select inside textarea area (bottom-left) */}
-                        <div className="absolute left-3 bottom-3 z-10">
+                        {/* Controls Container: Bottom Right */}
+                        <div className="absolute right-3 bottom-3 z-10 flex items-center gap-2">
                             <Select
                                 value={selectedDatabaseId ?? ""}
                                 onValueChange={setSelectedDatabaseId}
@@ -119,25 +119,23 @@ export const AIInput = ({
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </div>
 
-                        {/* Send button in bottom-right corner */}
-                        {input.trim() !== "" && (
-                        <Button
-                            type="submit"
-                            disabled={input.trim() === "" || isLoading}
-                            className={cn(
-                                "absolute right-3 bottom-3 h-8 w-8 p-0 rounded-lg transition-all",
-                "bg-[var(--color-text-highlight)] hover:bg-[var(--color-text-highlight)]/90 text-white"
-                            )}
-                        >
-                            {isLoading ? (
-                                <span className="text-xs">Thinking...</span>
-                            ) : (
-                                <Send className="h-4 w-4" />
-                            )}
-                        </Button>
-                        )}
+                            <Button
+                                type="submit"
+                                disabled={input.trim() === "" || isLoading}
+                                className={cn(
+                                    "h-8 rounded-lg transition-all",
+                                    "bg-[var(--color-text-highlight)] hover:bg-[var(--color-text-highlight)]/90 text-white",
+                                    isLoading ? "w-auto px-3" : "w-8 p-0"
+                                )}
+                            >
+                                {isLoading ? (
+                                    <span className="text-xs whitespace-nowrap">Thinking...</span>
+                                ) : (
+                                    <Send className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </div>
                     </div>
                 </form>
             </div>

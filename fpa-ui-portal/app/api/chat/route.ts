@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         const { object: classification } = await generateObject({
           model: azure(process.env.AZURE_OPENAI_DEPLOYMENT_NAME!),
           schema: z.object({
-            route: z.enum(["Greeting", "Conversation", "DatabaseQuery"]),
+            route: z.enum(["Greeting", "Conversation", "DatabaseQuery", "Insights"]),
             confidence: z.number().min(0).max(1).optional(),
             question: z
               .string()
@@ -92,6 +92,17 @@ export async function POST(req: NextRequest) {
           const result = streamText({
             model: azure(process.env.AZURE_OPENAI_DEPLOYMENT_NAME!),
             system: conversationResponsePrompt,
+            messages,
+          });
+          // Merge the result into the data stream
+          result.mergeIntoDataStream(dataStream);
+        }
+
+        // check if the classification is "Insights"
+        if (classification.route === "Insights") {
+          const result = streamText({
+            model: insightsModel,
+            system: insightsPrompt.summary || "You are a helpful assistant analyzing data.",
             messages,
           });
           // Merge the result into the data stream
@@ -222,70 +233,7 @@ export async function POST(req: NextRequest) {
                 },
               }),
 
-              // Tool 3: Generate Insights (simplified to avoid extra classification call)
-              generateInsights: tool({
-                description: "Generates insights from SQL execution results",
-                parameters: z.object({
-                  question: z.string().describe("The original user question"),
-                  sql: z.string().describe("The SQL query that was executed"),
-                  results: z
-                    .any()
-                    .describe("The results from the SQL query execution"),
-                }),
-                execute: async ({ question, sql, results }, { toolCallId }) => {
-                  try {
-                    // Signal that we're generating insights
-                    dataStream.writeData({
-                      type: "ProcessingState",
-                      state: "generatingInsights",
-                    });
-
-                    // Directly stream insights using the summary prompt to reduce extra model call overhead
-                    const insightsStream = streamText({
-                      model: insightsModel,
-                      system: insightsPrompt.summary || "",
-                      prompt: `Analyze SQL execution result:
-                            - User Query: ${classification?.question}
-                          - SQL Query: ${sql}
-                          - Query Results: ${JSON.stringify(results, null, 2)}
-                          Provide detailed, useful insights in Markdown format.`,
-                      onChunk({ chunk }) {
-                        if (chunk.type === "reasoning") {
-                          dataStream?.writeData({
-                            type: "Reasoning",
-                            result: chunk.textDelta,
-                            toolCallId,
-                          });
-                        }
-                      },
-                    }).mergeIntoDataStream(dataStream);
-
-                    // Signal completion
-                    dataStream.writeData({
-                      type: "ProcessingState",
-                      state: "completed",
-                    });
-
-                    return {
-                      success: true,
-                      message: "Insights generated successfully",
-                      queryInsight: insightsStream,
-                    };
-                  } catch (error) {
-                    console.error("Error generating insights:", error);
-                    dataStream.writeData({
-                      type: "Error",
-                      text: `Failed to generate insights: ${error}`,
-                    });
-                    return {
-                      success: false,
-                      error: `Failed to generate insights: ${error}`,
-                    };
-                  }
-                },
-              }),
-
-              // Tool 4: Stream SQL Generations
+              // Tool 3: Stream SQL Generations
               streamSQLGenerations: tool({
                 description: "Stream additional SQL generation variants",
                 parameters: z.object({

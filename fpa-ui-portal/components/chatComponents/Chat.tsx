@@ -11,6 +11,7 @@ import {
   Code,
   X,
   PanelRight,
+  Sparkles,
 } from "lucide-react";
 import DataTable from "./DataTable";
 import CustomizableGraph from "./../queryComponents/customizableGraph";
@@ -91,6 +92,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
   const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(null);
   const [dbLoading, setDbLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
+  const lastSubmittedQueryRef = useRef<string>("");
 
   // Add state for chat_id and user_id
   const [chat_id, setChatId] = useState<string | undefined>(initialChatId);
@@ -200,7 +202,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
   }, [botMessages, loading]);
 
   // Initialize chat with useChat hook
-  const { input, handleInputChange, handleSubmit, data } = useChat({
+  const { input, handleInputChange, handleSubmit, append, data } = useChat({
     api: "/copilot/fpa-chat/api/chat",
     body: { db_connection_id: selectedDatabaseId }, // Pass selected DB to API
     onFinish: async (message) => {
@@ -263,7 +265,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
                     type: recommendedGraphType,
                   };
 
-                  responseContent = "I've analyzed your data. You can view the results as a table, visualization, or see the SQL query used.";
+                  responseContent = `Here are the results for: "${lastSubmittedQueryRef.current}"`;
                   insightsContent = message?.content || "No Insights generated!";
                   // Save assistant message
                   if (user_id && token) {
@@ -348,6 +350,7 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
   // Function to send message on form submit
   const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    lastSubmittedQueryRef.current = input;
     setLoading(true);
     setBotMessages((prevMessages) => [
       ...prevMessages,
@@ -513,14 +516,24 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
                               size="sm"
                               className={cn(
                                 "flex items-center space-x-1 text-xs md:text-sm h-7 md:h-8 transition-all",
-                                "bg-[var(--color-bg-light)] dark:bg-[var(--color-bg-dark)]",
-                                "border border-neutral-300 dark:border-neutral-700",
-                                "text-[var(--color-text-dark)]",
                                 "bg-[var(--color-bg-dark)] border border-neutral-700 text-[var(--color-text-light)] hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
                               )}
                             >
-                              <PanelRight className="h-4 w-4" />
+                              <PanelRight className="h-4 w-4 mr-1" />
                               Results
+                            </Button>
+
+                            <Button
+                              onClick={() => append({ role: "user", content: "Generate insights for the data above." })}
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                "flex items-center space-x-1 text-xs md:text-sm h-7 md:h-8 transition-all",
+                                "bg-[var(--color-bg-dark)] border border-neutral-700 text-[var(--color-text-light)] hover:bg-[var(--color-button-highlight)] hover:text-[var(--color-text-highlight)]"
+                              )}
+                            >
+                              <Sparkles className="h-4 w-4 mr-1" />
+                              Generate Insights
                             </Button>
                           </div>
                         )}
@@ -531,7 +544,8 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
                         )}
                       </div>
                     ) : (
-                      msg.content
+                      /* Use Insights component to render markdown for standard messages */
+                      <Insights insights={msg.content as string} hideHeader={true} />
                     )}
                   </div>
                 </div>
