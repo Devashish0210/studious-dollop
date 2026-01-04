@@ -74,7 +74,16 @@ class ChatHistoryService:
                 headers=self.headers,
                 timeout=settings.default_engine_timeout,
             )
-            resp.raise_for_status()
+            try:
+                resp.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Chat history not found",
+                    )
+                raise e
+
             engine_json = resp.json()
 
         # engine returns ChatHistoryResponse: map directly to ChatResponse

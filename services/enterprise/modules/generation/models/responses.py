@@ -21,6 +21,13 @@ class GenerationSlackResponse(BaseModel):
     exec_time: float | None = None
     is_above_confidence_threshold: bool = False
 
+class FrequentQueryResponse(BaseModel):
+    id: str
+    sql: str
+    visible_text: str
+    description: str | None = None
+    metadata: dict | None = None
+
 
 class GenerationListResponse(BaseModel):
     id: ObjectIdString

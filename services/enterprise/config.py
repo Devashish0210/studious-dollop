@@ -6,6 +6,7 @@ from pydantic import BaseSettings
 
 PROMPT_COL = "prompts"
 SQL_GENERATION_COL = "sql_generations"
+FREQUENT_QUERIES_COL = "global_sql_template"
 NL_GENERATION_COL = "nl_generations"
 
 DATABASE_CONNECTION_COL = "database_connections"
