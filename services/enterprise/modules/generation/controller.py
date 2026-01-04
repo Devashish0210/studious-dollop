@@ -11,7 +11,6 @@ from modules.generation.models.requests import (
 )
 from modules.generation.models.responses import (
     NLGenerationResponse,
-    FrequentQueryResponse,
     PromptResponse,
     SQLGenerationResponse,
 )
@@ -273,14 +272,3 @@ async def export_csv_file(
     id: ObjectIdString, api_key: str = Security(get_api_key)
 ) -> StreamingResponse:
     return await generation_service.export_csv_file(id, api_key.organization_id)
-
-@router.get(
-    "/frequent-queries",
-    response_model=list[FrequentQueryResponse],
-    status_code=status.HTTP_200_OK,
-)
-async def get_frequent_queries(
-    api_key: str = Security(get_api_key),
-):
-    service = GenerationService()
-    return service.get_frequent_queries()

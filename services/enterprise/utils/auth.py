@@ -62,6 +62,7 @@ class VerifyToken:
 
     def _decode_payload(self):
         try:
+            print("JWT TOKEN NANSNAKFNIAF", self.token)
             decoded_token = jwt.decode(self.token, options={"verify_signature": False})
             print("JWT is valid. Decoded token:", decoded_token)
             return decoded_token

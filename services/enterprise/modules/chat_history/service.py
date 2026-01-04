@@ -1,5 +1,6 @@
 import httpx
 from config import settings
+from fastapi import HTTPException, status
 from datetime import datetime
 from modules.chat_history.models.responses import ChatResponse, ChatListResponse
 from modules.chat_history.models.requests import SaveChatMessageRequest

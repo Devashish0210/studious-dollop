@@ -4,7 +4,6 @@ from bson import ObjectId
 
 from config import (
     NL_GENERATION_COL,
-    FREQUENT_QUERIES_COL,
     PROMPT_COL,
     SQL_GENERATION_COL,
 )
@@ -74,10 +73,6 @@ class GenerationRepository:
             if sql_generation
             else None
         )
-    
-    def get_frequent_queries(self, organization_id: str) -> list[dict]:
-        # Filter by org if needed, or return global
-        return list(self.db[FREQUENT_QUERIES_COL].find({}))
 
     def get_latest_sql_generation(self, prompt_id: str, org_id: str) -> SQLGeneration:
         sql_generation = self._get_latest_item(

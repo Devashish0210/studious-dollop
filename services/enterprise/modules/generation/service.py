@@ -37,7 +37,6 @@ from modules.generation.models.requests import (
 )
 from modules.generation.models.responses import (
     NLGenerationResponse,
-    FrequentQueryResponse,
     PromptResponse,
     SQLGenerationResponse,
 )
@@ -96,19 +95,6 @@ class GenerationService:
             org_id=org_id,
             prompt_id=prompt_id,
         )
-
-    def get_frequent_queries(self) -> list[FrequentQueryResponse]:
-        queries = self.repository.get_frequent_queries(user.organization_id)
-        return [
-            FrequentQueryResponse(
-                id=str(q["_id"]),
-                sql=q["sql"],
-                visible_text=q["visible_text"],
-                description=q.get("description"),
-                metadata=q.get("metadata"),
-            )
-            for q in queries
-        ]
 
     def get_nl_generation(
         self, nl_generation_id: str, org_id: str
