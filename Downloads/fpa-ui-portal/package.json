@@ -59,6 +59,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/uuid": "^11.0.0",
     "prisma": "^6.8.2",
     "tailwindcss": "^4",
     "typescript": "^5"

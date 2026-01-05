@@ -56,7 +56,7 @@ export default async function RootLayout({
                     {/* Top Navbar */}
                     <AppTopNavbar isAuthenticated={!!session} />
                     {/* Main content area */}
-                    <main className="flex-1 w-full overflow-hidden relative">{children}</main>
+                    <main className="flex-1 w-full overflow-y-auto relative">{children}</main>
                     {/* Toaster to display alerts or messages */}
                     <Toaster />
                   </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
-import { fetchGraphType, fetchConnectedDatabases, saveChatMessage } from "@/lib/api";
+import { fetchGraphType, fetchConnectedDatabases, saveChatMessage, executeGlobalTemplate } from "@/lib/api";
 import { GlobalTemplates } from "./GlobalTemplates";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2 } from "lucide-react";
@@ -10,7 +10,7 @@ import Insights from "./Insights";
 import React from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import "../../app/globals.css";
 import { AIInput } from "../InputWithSelectDatabase";
@@ -47,6 +47,7 @@ interface BotMessage {
 
 export default function Chat({ initialChatId, initialMessages }: { initialChatId?: string, initialMessages?: any[] }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const [botMessages, setBotMessages] = useState<BotMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -99,6 +100,94 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
   useEffect(() => {
     fetchDatabases();
   }, [fetchDatabases]);
+
+  const executionStarted = useRef(false);
+
+   // Handle Global Template Execution from URL params
+  useEffect(() => {
+    const templateId = searchParams.get("templateId");
+    const templateText = searchParams.get("text");
+
+    if (templateId && templateText && selectedDatabaseId && token && !executionStarted.current) {
+      executionStarted.current = true;
+      const handleTemplateExecution = async () => {
+        setLoading(true);
+
+        // 1. Add user message
+        const userMsg: BotMessage = { role: "user", content: templateText };
+        setBotMessages([userMsg]);
+
+        // 2. Save user message
+        const saved = await saveChatMessage({
+          user_id,
+          chat_id: undefined,
+          role: "user",
+          content: templateText,
+          token,
+        });
+
+        const newId = saved?.chat_id || initialChatId;
+        if (newId) setChatId(newId);
+
+        // 3. Execute Template
+        const result = await executeGlobalTemplate(templateId, selectedDatabaseId);
+
+        if (result && result.rows) {
+          // Transform data for DataTable
+          const columns = result.columns || [];
+          const rows = result.rows.map((row: any) => Object.values(row));
+
+          // Get graph recommendations
+          const graphRecommendation = await fetchGraphType(templateText, result.rows);
+
+          const assistantContent = `Here are the results for: "${templateText}"`;
+          const assistantMsg: BotMessage = {
+            role: "assistant",
+            content: assistantContent,
+            artifacts: {
+              tableData: { columns, rows },
+              graphData: {
+                data: graphRecommendation?.formattedData || result.rows,
+                type: graphRecommendation?.recommendedGraphs?.[0] || "bar"
+              },
+              codeData: result.sql || "Executed via template"
+            }
+          };
+
+          // 4. Save Assistant message
+          await saveChatMessage({
+            user_id,
+            chat_id: newId,
+            role: "assistant",
+            content: assistantContent,
+            token,
+          });
+
+          setBotMessages(prev => [...prev, assistantMsg]);
+        } else {
+          setBotMessages(prev => [...prev, { 
+            role: "assistant", 
+            content: "I couldn't execute that template. Please try again or ask another question." 
+          }]);
+        }
+
+        setLoading(false);
+
+        // Fix URL formation: If we are already on a chat page, just replace the URL to clean params
+        // If we are on the home page, redirect to the specific chat
+        const targetPath = `/chat/${newId}`;
+        if (window.location.pathname !== targetPath) {
+          router.replace(targetPath);
+        } else {
+          router.replace(window.location.pathname); // Just strip search params
+        }
+      };
+
+      handleTemplateExecution();
+    }
+  }, [searchParams, selectedDatabaseId, token, router]);
+
+  // Scroll to bottom when new messages arrive
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {

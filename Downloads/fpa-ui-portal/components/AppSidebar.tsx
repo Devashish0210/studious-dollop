@@ -17,7 +17,7 @@ import {
   SidebarGroupLabel,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { House, PlusCircle, SquareArrowOutUpRight } from "lucide-react";
+import { House, PlusCircle, SquareArrowOutUpRight, Database } from "lucide-react";
 import { SidebarUserProfile } from "./SidebarUserProfile";
 import { FullScreenLoader } from "./FullScreenLoader";
 import { SidebarChatHistory } from "./SidebarChatHistory";
@@ -60,13 +60,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Home Link */}
+              {/* Home Link
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Home">
                   <Link href="https://www.microland.com/">
                     <House />
                     <span>Home</span>
                   </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem> */}
+
+              {/* Global SQL Link */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => handleNavigation("/globalsql")}
+                  tooltip="Global SQL"
+                >
+                  <Database />
+                  <span>Global SQL</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

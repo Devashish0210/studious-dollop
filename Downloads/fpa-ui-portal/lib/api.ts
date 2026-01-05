@@ -55,6 +55,25 @@ export const streamSQLGenerations = async (
   }
 };
 
+// Used to execute a Global SQL template directly
+export const executeGlobalTemplate = async (templateId: string, dbId: string) => {
+  try {
+    const response = await axios.post(
+      `${API_ENGINE_URL}/global-sql-templates/${templateId}/execute`,
+      {}, // Empty body as per curl -d ''
+      { 
+        params: { db_connection_id: dbId, max_rows: 100 },
+        headers 
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error executing global template:", error);
+    return null;
+  }
+};
+
+
 // Used to generate SQL query from the user question (Natural Language)
 export const fetchSQLQuery = async (query: string) => {
   try {
