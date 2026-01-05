@@ -82,8 +82,8 @@ class FastAPI(dataherald.server.Server):
     def __init__(self, settings: Settings):
         super().__init__(settings)
         self._app = fastapi.FastAPI(
-            root_path="/copilot/dataheraldengine",
-            root_path_in_servers=True,
+            # root_path="/copilot/dataheraldengine",
+            # root_path_in_servers=True,
             debug=True,
             version="2.0.0",
             # openapi_url="/openapi.json",

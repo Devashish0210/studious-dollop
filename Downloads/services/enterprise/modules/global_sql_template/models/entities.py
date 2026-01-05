@@ -6,3 +6,4 @@ class GlobalSqlTemplate(BaseModel):
     sql: str
     visible_text: str
     description: str | None
+    db_connection_id: str
