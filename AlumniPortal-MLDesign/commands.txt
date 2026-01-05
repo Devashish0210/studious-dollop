@@ -1,5 +1,0 @@
-build and push:
-    docker build . -t aicoedevconreg.azurecr.io/alumni_fe/alumni_fe:14.9
-    az login --use-device-code
-    az acr login --name aicoedevconreg.azurecr.io
-    docker push aicoedevconreg.azurecr.io/alumni_fe/alumni_fe:14.9
