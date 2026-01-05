@@ -1,0 +1,20 @@
+services:
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    ports:
+      - "3491:3491"
+    command: uvicorn app:app --host 0.0.0.0 --port 3491 --log-level debug --reload
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app
+    networks:
+      - dataherald_network
+    restart: always
+networks:
+  dataherald_network:
+    external: true
