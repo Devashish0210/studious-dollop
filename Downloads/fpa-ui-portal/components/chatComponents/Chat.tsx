@@ -164,12 +164,48 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
                   };
                 }
               }
-            }
-            else {
-              // Non-tool parts
-              if ((index === 0 || index === 1) && messagePart?.type === "text") {
-                responseContent = messagePart?.text || "No response generated.";
+              else if (invocationTool?.toolName === "executeFollowupSQLQueryTool") {
+                const executionResult = invocationTool?.result;
+
+                // If executionResult is available, process the SQL query
+                if (executionResult) {
+                  // Getting SQL Details ----------------------------------->
+                  if (executionResult.sql) {
+                    // Store SQL query
+                    tempCodeData = executionResult?.sql || "No SQL query generated.";
+                  }
+                  else {
+                    tempCodeData = "No SQL query generated.";
+                  }
+
+                  // Getting Result Table Details --------------------------->
+                  if (executionResult.queryResults) {
+                    const columns = Object.keys(executionResult?.queryResults[0]);
+                    const rows = executionResult?.queryResults?.map(
+                      (obj: Record<string, any>) => Object.values(obj)
+                    );
+                    // Store table data
+                    tempTableData = { columns, rows };
+
+                    // Get graph recommendations
+                    const graphRecommendation = await fetchGraphType(
+                      input,
+                      executionResult?.queryResults
+                    );
+                    const recommendedGraphType = graphRecommendation?.recommendedGraphs?.[0] || "bar";
+                    const formattedData = graphRecommendation?.formattedData || executionResult?.queryResults;
+
+                    // Store graph data
+                    tempGraphData = {
+                      data: formattedData,
+                      type: recommendedGraphType,
+                    };
+                  }
+                }
               }
+            } else if (messagePart?.type === "text" && (index === 0 || index === 1)) {
+              // Non-tool parts
+              responseContent = messagePart?.text || "No response generated.";
             }
           }) || []
         );
@@ -311,6 +347,16 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
           }
         })
         .join("");
+      
+      if (user_id && token) {
+        await saveChatMessage({
+          user_id,
+          chat_id,
+          role: "assistant",
+          content: cleanText,
+          token,
+        });
+      }
 
       setBotMessages((prev) => {
         const newMessages = [...prev];
@@ -374,24 +420,24 @@ export default function Chat({ initialChatId, initialMessages }: { initialChatId
     )}>
       {/* Main Chat UI */}
       <div
-        className="flex-grow flex flex-col h-full overflow-hidden w-full transition-all duration-300 pr-4"
+        className="flex-grow flex flex-col h-full overflow-hidden w-full transition-all duration-300"
         style={{ width: "100%" }}
       >
         <div
           ref={chatContainerRef}
-          className="flex-grow overflow-y-auto p-4 pb-0 mb-0"
+          className="flex-grow overflow-y-auto px-4 py-4 pb-0 mb-0"
         >
           {botMessages.length === 0 && !loading && (
-            <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+             <div className="h-full flex flex-col items-center justify-center p-4 md:p-8 pt-20 md:pt-15 text-center">
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="max-w-2xl w-full flex flex-col items-center"
+                className="max-w-full md:max-w-2xl w-full flex flex-col items-center px-4"
               >
-                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-3">
+                 <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-3 break-words">
                   Financial Insights Assistant
                 </h2>
-                <p className="text-muted-foreground text-lg mb-10">
+                <p className="text-muted-foreground text-lg">
                   Analyze your financial data with natural language. Choose a suggested query or type your own below.
                 </p>
                 <GlobalTemplates

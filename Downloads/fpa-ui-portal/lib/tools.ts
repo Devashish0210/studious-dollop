@@ -13,7 +13,7 @@ const headers = {
 };
 
 // Tool Used to generate SQL query from the user question (Natural Language)
-export const fetchSQLQuery = async (query: string, db_connection_id:string ) => {
+export const fetchSQLQuery = async (query: string, db_connection_id: string) => {
   try {
     const response = await axios.post(
       `${API_ENGINE_URL}/prompts/sql-generations`,
@@ -83,6 +83,39 @@ export const streamSQLGenerations = async (
     return response?.data;
   } catch (error) {
     console.error("Error streaming SQL generations:", error);
+    return null;
+  }
+};
+
+// Tool Used to execute a follow-up SQL query (POST)
+export const executeFollowupSQLQuery = async (
+  sql_generation_id: string,
+  query: string, 
+  db_connection_id: string
+) => {
+  try {
+    const response = await axios.post(
+      `${API_ENGINE_URL}/prompts/sql-generations/execute-followup-query?sql_generation_id=${sql_generation_id}`,
+      {
+        low_latency_mode: false,
+        llm_config: {
+          llm_name: AZURE_LLM_NAME,
+          api_base: AZURE_OPENAI_API_BASE,
+        },
+        evaluate: false,
+        metadata: {},
+        prompt: {
+          text: query,
+          db_connection_id: db_connection_id,
+          // schemas: ["public"],
+          metadata: {},
+        },
+      },
+      { headers }
+    );
+    return response?.data;
+  } catch (error) {
+    console.error("Error executing follow-up SQL query:", error);
     return null;
   }
 };

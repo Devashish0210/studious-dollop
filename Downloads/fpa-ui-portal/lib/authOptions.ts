@@ -41,7 +41,7 @@ async function getUserRoleFromLoginAPI(
 
   try {
     const response = await axios.post<LoginResponse>(
-      `http://localhost:3591/auth/login`,
+      `http://localhost:3491/auth/login`,
       user,
       {
         headers: {
@@ -181,3 +181,4 @@ export const authOptions: NextAuthOptions = {
     maxAge: 12 * 60 * 60, // 12 hours
   },
 };
+ 

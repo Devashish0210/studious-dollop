@@ -11,7 +11,7 @@ import {
   insightsPrompt,
   classificationPrompt,
 } from "@/lib/prompts";
-import { executeSQLQuery, fetchSQLQuery } from "@/lib/tools";
+import { executeSQLQuery, fetchSQLQuery, executeFollowupSQLQuery } from "@/lib/tools";
 import { insightsModel } from "@/lib/fw";
 import { streamSQLGenerations } from "@/lib/api";
 
@@ -57,17 +57,18 @@ export async function POST(req: NextRequest) {
         const { object: classification } = await generateObject({
           model: azure(process.env.AZURE_OPENAI_DEPLOYMENT_NAME!),
           schema: z.object({
-            route: z.enum(["Greeting", "Conversation", "DatabaseQuery", "Insights"]),
+            route: z.enum(["Greeting", "Conversation", "DatabaseQuery", "Insights", "FollowUp"]),
             confidence: z.number().min(0).max(1).optional(),
             question: z
               .string()
               .describe("The User input or question to be classified"),
+            sqlQueryId: z.string().describe("The sqlQueryId from the messages for which the question is classified as FollowUp").optional(),
           }),
           messages,
           system: classificationPrompt,
         });
 
-        console.log(classification, "classification");
+        console.log("Classification:", classification);
 
         // Initial state - thinking about the response
         dataStream.writeData({
@@ -108,6 +109,70 @@ export async function POST(req: NextRequest) {
           // Merge the result into the data stream
           result.mergeIntoDataStream(dataStream);
         }
+
+        // check if the classification is a "FollowUp"
+        if (classification.route === "FollowUp") {
+          console.log("Handling FollowUp question");
+          
+          const stream = streamText({
+            model: azure(process.env.AZURE_OPENAI_DEPLOYMENT_NAME!),
+            system: `
+            You are handling a follow-up question.
+            Use the provided sqlQueryId to re-execute the existing SQL query
+            and answer based on the returned results.
+            `,
+            messages,
+            tools: {
+              executeFollowupSQLQueryTool: tool({
+                description:
+                  "Executes a generated SQL query using its query ID",
+                parameters: z.object({
+                  question: z
+                    .string()
+                    .describe(
+                      "The user question for which SQL query should be generated"
+                    ),
+                  sqlQueryId: z.string(),
+                }),
+                execute: async ({ sqlQueryId, question }) => {
+                  dataStream.writeData({
+                    type: "ProcessingState",
+                    state: "executingSQL",
+                  });
+
+                  const executionResult = await executeFollowupSQLQuery(sqlQueryId, question, db_connection_id);
+
+                  if (!executionResult) {
+                    dataStream.writeData({
+                      type: "Error",
+                      text: "Failed to execute SQL Query.",
+                    });
+                    return {
+                      success: false,
+                      error: "Failed to execute SQL Query",
+                    };
+                  }
+
+                  console.log("FollowUp Execution Result:", executionResult.sql)
+
+                  return {
+                    success: true,
+                    queryResults: executionResult.sql_results,
+                    sql: executionResult.sql,
+                    message: `SQL query executed successfully. Rows returned: ${Array.isArray(executionResult.sql_results)
+                        ? executionResult.sql_results.length
+                        : 0
+                      }`,
+                  };
+                },
+              }),
+            },
+          });
+
+          // Merge the stream into the data stream
+          stream.mergeIntoDataStream(dataStream);
+        }
+
 
         // check if the classification is a "DatabaseQuery"
         if (classification.route === "DatabaseQuery") {
@@ -217,7 +282,7 @@ export async function POST(req: NextRequest) {
                         Array.isArray(executionResult)
                           ? executionResult?.length
                           : 0
-                      }`,
+                        }`,
                     };
                   } catch (error) {
                     console.error("Error executing SQL:", error);
